@@ -34,6 +34,8 @@ from fraud.text_norm import (
         ("Trident/7.0", "microsoft", "windows desktop (ie)"),
         ("rv:11.0", "unknown", "gecko browser string"),
         ("  windows  ", "microsoft", "windows desktop"),
+        ("CAM-L03 Build/HUAWEICAM-L03", "huawei", "huawei cam"),
+        ("TRT-L53 Build/HUAWEITRT-L53", "huawei", "huawei trt"),
         ("something weird", "other", "other"),
     ],
 )
@@ -96,6 +98,7 @@ def test_browser(raw, family, major, mobile):
         ("comcast.net", "comcast", "net", 0, "generic"),
         ("sbcglobal.net", "att", "net", 0, "generic"),
         ("cfl.rr.com", "spectrum", "rr.com", 0, "generic"),
+        ("sc.rr.com", "spectrum", "rr.com", 0, "generic"),
         ("scranton.edu", "edu", "edu", 0, "generic"),
         ("unknownisp.org", "other", "org", 0, "generic"),
     ],

@@ -80,7 +80,9 @@ def normalize_device(raw: object) -> Device:
     s = _clean(raw)
     if s is None:
         return Device(None, None)
-    s = re.split(r"\s*build/", s)[0].strip(" -_/;")  # Android build IDs are noise
+    model, *rest = re.split(r"\s*build/", s, maxsplit=1)
+    build = rest[0] if rest else ""
+    s = model.strip(" -_/;")  # Android build IDs are mostly noise...
     for rx, brand, family in _DEVICE_RX:
         m = rx.search(s)
         if m:
@@ -89,7 +91,16 @@ def normalize_device(raw: object) -> Device:
             # strip a trailing regional-variant letter: "samsung g930v" -> "samsung g930"
             fam = re.sub(r"(\d{3})[a-z]$", r"\1", fam)
             return Device(brand, fam)
+    # ...except when the model code is unknown but the build ID names the vendor,
+    # e.g. "CAM-L03 Build/HUAWEICAM-L03"
+    for vendor in _BUILD_VENDORS:
+        if vendor in build:
+            prefix = re.match(r"[a-z]+", s)
+            return Device(vendor, f"{vendor} {prefix.group(0)}" if prefix else f"{vendor} other")
     return Device(OTHER, OTHER)
+
+
+_BUILD_VENDORS = ("huawei", "samsung", "lenovo", "motorola", "lg", "xiaomi", "zte", "htc")
 
 
 # ------------------------------------------------------------------------- OS (id_30)
@@ -224,6 +235,8 @@ def normalize_email(raw: object) -> Email:
     provider = _PROVIDER_ALIASES.get(head, OTHER)
     if provider == OTHER and tail and tail[-1] == "edu":
         provider = "edu"
+    if provider == OTHER and "rr" in tail:  # regional Road Runner domains: sc.rr.com, cfl.rr.com
+        provider = "spectrum"
     tld = ".".join(tail) if tail else None
     region = _REGION_TLDS.get(tail[-1], "generic") if tail else "generic"
     free = int(provider in _FREE)
