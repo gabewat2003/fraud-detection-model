@@ -1,0 +1,8 @@
+# Time-ordered split on TransactionDT (quantiles of the time axis).
+# train  : early stopping never sees it
+# valid  : early stopping + Optuna + rule thresholds
+# calib  : isotonic calibration + global-threshold selection
+# test   : touched once, for the final numbers
+train_end: 0.60
+valid_end: 0.75
+calib_end: 0.85

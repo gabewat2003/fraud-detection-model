@@ -1,0 +1,9 @@
+.venv
+.git
+data
+notebooks
+reports
+mlruns
+mlflow.db
+**/__pycache__
+models/**/*.duckdb.wal

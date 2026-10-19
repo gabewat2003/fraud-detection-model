@@ -1,0 +1,12 @@
+# Minimal runtime for the scoring API container (no training / notebook / dashboard deps)
+numpy>=2.0
+pandas>=2.2
+pyarrow>=17
+duckdb>=1.1
+scikit-learn>=1.5
+lightgbm>=4.5
+pyyaml>=6.0
+pydantic>=2.9
+fastapi>=0.115
+uvicorn>=0.32
+altair>=5.4
