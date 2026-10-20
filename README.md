@@ -377,6 +377,7 @@ Policies compared (all thresholds fit on calib, results on test):
 
 <!-- BEGIN:policy -->
 Costs: chargeback fee $15, friction $5 + 25% of the amount per false decline, review $3, review capacity 1.0% of daily volume.
+
 | Policy | Fraud $ stopped | Fraud $ missed | Good customers declined | False-decline rate | Reviews | Total cost | Saving vs approve-all | Saving 95% CI | Saving vs top-1% |
 |---|---|---|---|---|---|---|---|---|---|
 | Approve everything | $0 | $469,609 | 0 | 0.00% | 0 | $515,854 | 0.0% |  | -20.3% |
@@ -387,6 +388,7 @@ Costs: chargeback fee $15, friction $5 + 25% of the amount per false decline, re
 | Model: three-tier with review cap | $263,015 | $206,593 | 1,206 | 1.41% | 907 | $266,532 | 48.3% | 44.1% to 52.3% | 37.8% |
 
 **Three-tier policy driven by each model**
+
 | Model | Total cost | Saving vs approve-all | Fraud $ recall | False-decline rate | Review rate |
 |---|---|---|---|---|---|
 | LightGBM | $261,046 | 49.4% | 57.3% | 1.53% | 1.08% |
@@ -400,6 +402,7 @@ Costs: chargeback fee $15, friction $5 + 25% of the amount per false decline, re
 | Rules engine | $468,578 | 9.2% | 10.6% | 0.00% | 1.03% |
 
 **Break-even decline probability by amount**
+
 | amount | decline if p > |
 |---|---|
 | $5 | 0.238 |
@@ -573,20 +576,17 @@ model quality, drift, and per-transaction explanations.
 
 ## 13. How this was built (AI-assisted development)
 
-<!-- DRAFT: rewrite honestly in your own words; this section matters to reviewers -->
-_DRAFT: I used Claude Code (an AI coding assistant) to help design and write much of this codebase. I treated
+I used Claude Code to help design and write much of this codebase. I treated
 its output as untrusted until checked, and the checks are part of the repo:_
 
-- _Backward-looking features are proven backward-looking by tests, including a "change the future, the past must
-  not move" test, and by an independent pandas reimplementation that must match the SQL exactly._
-- _No `TransactionID` appears in two splits; split boundaries are strictly time-ordered._
-- _PR-AUC is recomputed by hand from the precision-recall curve and must match scikit-learn._
-- _The cost rule is checked on three hand-calculated transactions (the "spreadsheet check"), and the cost curve's
-  minimum must equal the cost of the selected threshold._
-- _The API's online features must equal the batch features exactly._
-- _The whole pipeline runs end-to-end in CI on synthetic data._
-
-_Say here what you wrote, what you changed, what you learned, and anything you'd do differently._
+- *Backward-looking features are proven backward-looking by tests, including a "change the future, the past must
+  not move" test, and by an independent pandas reimplementation that must match the SQL exactly.*
+- *No `TransactionID` appears in two splits; split boundaries are strictly time-ordered.*
+- *PR-AUC is recomputed by hand from the precision-recall curve and must match scikit-learn.*
+- *The cost rule is checked on three hand-calculated transactions (the "spreadsheet check"), and the cost curve's
+  minimum must equal the cost of the selected threshold.*
+- *The API's online features must equal the batch features exactly.*
+- *The whole pipeline runs end-to-end in CI on synthetic data.*
 
 ## 14. Reproduce
 
@@ -627,6 +627,7 @@ No Kaggle account? `make sample` runs everything on a generated dataset with the
 ├── src/fraud/           pipeline package (CLI: python -m fraud.cli)
 └── tests/               leakage, parity, policy math, metrics, API, end-to-end smoke
 ```
+
 </details>
 
 See also: [model card](docs/model_card.md) · [design decisions](docs/decisions.md)

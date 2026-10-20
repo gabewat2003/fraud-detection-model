@@ -27,3 +27,6 @@ __pycache__/
 # local tooling
 .claude/
 .venv-linux/
+
+# personal notes (interview prep)
+notes/
