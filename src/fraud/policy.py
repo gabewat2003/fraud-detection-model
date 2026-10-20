@@ -2,16 +2,21 @@
 
 Cost model (assumptions in configs/costs.yaml, varied in the sensitivity grid):
     approve a fraud   -> lose amount + chargeback fee
-    decline a good    -> friction cost (lost margin, support contact, churn risk)
+    decline a good    -> friction (support contact, churn risk) + the margin on the lost sale
     review anything   -> reviewer cost; the reviewer is assumed to resolve it correctly
     approve a good / decline a fraud -> 0
 
-For one transaction with fraud probability p and amount a:
+For one transaction with fraud probability p and amount a, with lost margin rate m:
     E[cost | approve] = p * (a + fee)
-    E[cost | decline] = (1 - p) * friction
+    E[cost | decline] = (1 - p) * (friction + m * a)
     E[cost | review]  = review_cost
-Declining beats approving when p > friction / (friction + a + fee): the break-even
-probability FALLS as the amount rises, so large transactions get a stricter cutoff.
+Declining beats approving when p > (friction + m*a) / (friction + m*a + a + fee). Both
+sides grow with the amount, so the break-even probability falls from roughly
+friction / (friction + fee) on tiny orders toward m / (1 + m) on large ones.
+
+The lost-margin term matters: with a flat friction cost only, declining a $500 order
+looks as cheap as declining a $5 one, and the "optimal" policy declines a large share of
+good customers (the first version of this project declined 15% of them).
 
 Every threshold below is fit on the calib split and then applied unchanged to test.
 """
@@ -33,14 +38,20 @@ LABELS = {APPROVE: "approve", REVIEW: "review", DECLINE: "decline"}
 def expected_costs(p, amt, c: Costs) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     p, amt = np.asarray(p, dtype=float), np.asarray(amt, dtype=float)
     e_approve = p * (amt + c.chargeback_fee)
-    e_decline = (1 - p) * c.friction_cost
+    e_decline = (1 - p) * decline_cost(amt, c)
     e_review = np.full_like(p, c.review_cost)
     return e_approve, e_decline, e_review
 
 
+def decline_cost(amt, c: Costs) -> np.ndarray:
+    """Cost of wrongly declining a legitimate order: friction plus the lost margin."""
+    return c.friction_cost + c.lost_margin_rate * np.asarray(amt, dtype=float)
+
+
 def break_even_probability(amt, c: Costs) -> np.ndarray:
     amt = np.asarray(amt, dtype=float)
-    return c.friction_cost / (c.friction_cost + amt + c.chargeback_fee)
+    d = decline_cost(amt, c)
+    return d / (d + amt + c.chargeback_fee)
 
 
 def realized_cost(dec, y, amt, c: Costs) -> np.ndarray:
@@ -48,7 +59,8 @@ def realized_cost(dec, y, amt, c: Costs) -> np.ndarray:
     dec, y, amt = np.asarray(dec), np.asarray(y), np.asarray(amt, dtype=float)
     cost = np.zeros(len(dec))
     cost[(dec == APPROVE) & (y == 1)] = amt[(dec == APPROVE) & (y == 1)] + c.chargeback_fee
-    cost[(dec == DECLINE) & (y == 0)] = c.friction_cost
+    good_declined = (dec == DECLINE) & (y == 0)
+    cost[good_declined] = decline_cost(amt[good_declined], c)
     cost[dec == REVIEW] = c.review_cost
     return cost
 

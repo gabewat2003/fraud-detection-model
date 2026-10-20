@@ -74,11 +74,15 @@ def tune(
 
 
 @app.command()
-def train(profile: str = Profile, no_ablations: bool = False):
+def train(
+    profile: str = Profile,
+    no_ablations: bool = False,
+    only: list[str] = typer.Option(None, help="retrain just these experiments, keep the rest"),
+):
     """Train rules / LR / LightGBM variants, calibrate, and score every split."""
     from fraud import train as t
 
-    out = _stage("train", t.run, get_paths(profile), include_ablations=not no_ablations)
+    out = _stage("train", t.run, get_paths(profile), include_ablations=not no_ablations, only=only)
     for name, info in out["experiments"].items():
         typer.echo(
             f"  {name:20s} valid PR-AUC {info['valid']['pr_auc']:.4f}  test PR-AUC {info['test']['pr_auc']:.4f}"

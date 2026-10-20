@@ -77,13 +77,14 @@ def paths_at(base: Path) -> Paths:
 
 class Sensitivity(BaseModel):
     friction_cost: list[float]
-    chargeback_fee: list[float]
+    lost_margin_rate: list[float]
     review_cap: list[float]
 
 
 class Costs(BaseModel):
     chargeback_fee: float
     friction_cost: float
+    lost_margin_rate: float = 0.0
     review_cost: float
     review_cap: float
     sensitivity: Sensitivity | None = None

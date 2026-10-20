@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 
 MIN_RECALL = 0.05
+MIN_LIFT = 2.0  # a rule must at least double the base fraud rate to be worth running
 
 RULES = {
     "velocity_1h": {
@@ -43,7 +44,9 @@ RULES = {
 
 
 def fit(valid: pd.DataFrame) -> dict:
+    """Keep a rule only if some threshold gives >= MIN_LIFT x the base rate at >= MIN_RECALL."""
     y = valid.isFraud.to_numpy()
+    base = y.mean()
     params = {}
     for name, rule in RULES.items():
         best = None
@@ -52,7 +55,8 @@ def fit(valid: pd.DataFrame) -> dict:
             if hit.sum() == 0:
                 continue
             precision, recall = y[hit].mean(), y[hit].sum() / max(y.sum(), 1)
-            if recall >= MIN_RECALL and (best is None or precision > best[1]):
+            useful = recall >= MIN_RECALL and precision >= MIN_LIFT * base
+            if useful and (best is None or precision > best[1]):
                 best = (n, precision, recall)
         if best is not None:
             params[name] = {"threshold": best[0], "valid_precision": best[1], "valid_recall": best[2],

@@ -38,6 +38,7 @@ class Transaction(BaseModel):
 class CostOverride(BaseModel):
     chargeback_fee: float | None = None
     friction_cost: float | None = None
+    lost_margin_rate: float | None = None
     review_cost: float | None = None
 
 

@@ -31,7 +31,7 @@ from sklearn.isotonic import IsotonicRegression
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import average_precision_score
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.preprocessing import OneHotEncoder, QuantileTransformer
 
 from fraud import featuresets as fs
 from fraud import rules, split, tracking
@@ -94,9 +94,9 @@ def load_modeling_frame(paths: Paths) -> pd.DataFrame:
 
 
 def cost_weights(y: np.ndarray, amt: np.ndarray) -> np.ndarray:
-    """Weight each row by what a mistake on it costs: amount + fee for fraud, friction otherwise."""
+    """Weight each row by what a mistake on it costs: amount + fee for fraud, friction + lost margin otherwise."""
     c = costs()
-    w = np.where(y == 1, amt + c.chargeback_fee, c.friction_cost)
+    w = np.where(y == 1, amt + c.chargeback_fee, c.friction_cost + c.lost_margin_rate * amt)
     return w / w.mean()
 
 
@@ -131,7 +131,17 @@ def fit_lr(train: pd.DataFrame) -> Pipeline:
                 Pipeline(
                     [
                         ("impute", SimpleImputer(strategy="median", add_indicator=True)),
-                        ("scale", StandardScaler()),
+                        # ratios and counts are heavy-tailed; without this a few extreme
+                        # rows saturate the logit and fill the top 1% with false alarms
+                        (
+                            "quantile",
+                            QuantileTransformer(
+                                n_quantiles=1000,
+                                output_distribution="normal",
+                                subsample=200_000,
+                                random_state=0,
+                            ),
+                        ),
                     ]
                 ),
                 num,
@@ -171,6 +181,7 @@ def run(paths: Paths, include_ablations: bool = True, only: list[str] | None = N
     scored = df[[c for c in SCORED_KEEP if c in df]].copy()
     results, artifacts = {}, {}
     exps = [e for e in experiments(paths, include_ablations) if only is None or e.name in only]
+    previous = _previous_run(paths) if only else None
 
     for exp in exps:
         t0 = time.time()
@@ -222,8 +233,16 @@ def run(paths: Paths, include_ablations: bool = True, only: list[str] | None = N
             info["seconds"] = round(time.time() - t0, 1)
             results[exp.name] = info
 
-    champion = max((e.name for e in exps if e.candidate and e.name in results),
-                   key=lambda n: results[n]["valid"]["pr_auc"])  # fmt: skip
+    candidates = {e.name for e in experiments(paths, include_ablations) if e.candidate}
+    if previous is not None:
+        # partial retrain: keep every experiment that was not re-run this time
+        old_results, old_scored = previous
+        results = {**{k: v for k, v in old_results.items() if k not in results}, **results}
+        keep = [c for c in old_scored.columns if c not in scored.columns]
+        scored = scored.merge(old_scored[["TransactionID", *keep]], on="TransactionID", how="left")
+    champion = max(
+        (n for n in results if n in candidates), key=lambda n: results[n]["valid"]["pr_auc"]
+    )
     _save_models(paths, artifacts, champion, results)
     scored.to_parquet(paths.scored, index=False)
 
@@ -232,6 +251,13 @@ def run(paths: Paths, include_ablations: bool = True, only: list[str] | None = N
            "new_uid_test_share": float(df.is_new_uid[masks["test"]].mean())}  # fmt: skip
     save_json(out, paths.reports / "train_results.json")
     return out
+
+
+def _previous_run(paths: Paths):
+    res_path = paths.reports / "train_results.json"
+    if not (res_path.exists() and paths.scored.exists()):
+        return None
+    return load_json(res_path)["experiments"], pd.read_parquet(paths.scored)
 
 
 def _save_models(paths: Paths, artifacts: dict, champion: str, results: dict) -> None:
@@ -248,6 +274,8 @@ def _save_models(paths: Paths, artifacts: dict, champion: str, results: dict) ->
                 f,
             )
 
+    if champion not in artifacts:  # partial retrain that did not touch the champion
+        return
     a = artifacts[champion]
     cutoffs = load_json(paths.processed / "split_cutoffs.json")
     meta = {

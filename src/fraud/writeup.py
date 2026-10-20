@@ -64,7 +64,7 @@ def blocks(paths: Paths) -> dict[str, str]:
             f"**{_pct(three['good_declined_rate'], 2)} of legitimate customers** and sending "
             f"{_pct(three['review_rate'], 2)} of traffic to manual review (cap {_pct(pol['costs']['review_cap'])}).",
             f"- {_pct(three['savings_vs_top_1pct'])} cheaper than the common 'decline the top 1% of scores' rule: "
-            f"the cutoff depends on the amount at stake, not on a fixed share of traffic.",
+            f"declines follow expected cost, and the most uncertain high-value cases go to manual review.",
             f"- Model: {MODEL_LABELS.get(champ, champ)}, test PR-AUC **{t['pr_auc']:.3f}** (95% CI {ci[0]:.3f}-{ci[1]:.3f}) "
             f"against a {t['base_rate']:.3f} base rate.",
         ])  # fmt: skip

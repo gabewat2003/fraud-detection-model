@@ -25,10 +25,9 @@ def md_table(df: pd.DataFrame, formats: dict | None = None) -> str:
     formats = formats or {}
     cols = list(df.columns)
     lines = ["| " + " | ".join(cols) + " |", "|" + "|".join("---" for _ in cols) + "|"]
-    for _, r in df.iterrows():
+    for row in zip(*(df[c].tolist() for c in cols), strict=True):  # keeps per-column dtypes
         cells = []
-        for c in cols:
-            v = r[c]
+        for c, v in zip(cols, row, strict=True):
             fmt = formats.get(c)
             if fmt and isinstance(v, (int, float, np.number)) and not pd.isna(v):
                 if fmt.startswith("$"):  # currency: "$,.0f" -> "$1,234" / "-$1,234"
@@ -240,17 +239,17 @@ def sensitivity(test: pd.DataFrame, calib: pd.DataFrame, champion: str) -> pd.Da
     pt, pc = test[f"pc_{champion}"].to_numpy(), calib[f"pc_{champion}"].to_numpy()
     rows = []
     for f in s.friction_cost:
-        for fee in s.chargeback_fee:
+        for m in s.lost_margin_rate:
             for cap in s.review_cap:
                 c = base.model_copy(
-                    update={"friction_cost": f, "chargeback_fee": fee, "review_cap": cap}
+                    update={"friction_cost": f, "lost_margin_rate": m, "review_cap": cap}
                 )
                 approve = policy.summarize(policy.approve_all(len(y)), y, amt, c)["total_cost"]
                 rt = policy.fit_review_threshold(pc, calib.TransactionAmt.to_numpy(), c)
                 for name, d in (("three-tier", policy.three_tier(pt, amt, c, rt)),
                                 ("amount-aware", policy.amount_aware(pt, amt, c))):  # fmt: skip
                     sm = policy.summarize(d, y, amt, c)
-                    rows.append({"friction_cost": f, "chargeback_fee": fee, "review_cap": cap, "policy": name,
+                    rows.append({"friction_cost": f, "lost_margin_rate": m, "review_cap": cap, "policy": name,
                                  "total_cost": sm["total_cost"], "savings": 1 - sm["total_cost"] / approve,
                                  "good_declined_rate": sm["good_declined_rate"],
                                  "fraud_dollar_recall": sm["fraud_dollar_recall"]})  # fmt: skip
@@ -272,7 +271,7 @@ def _write_policy_md(paths, table, by_model, break_even, queue, th, c) -> None:
            "Saving vs approve-all": ".1%", "Saving vs top-1%": ".1%"}  # fmt: skip
     t["Fraud $ stopped"] = t["Fraud $ stopped"].astype(float)
     parts = [
-        f"Costs: chargeback fee ${c.chargeback_fee:g}, friction ${c.friction_cost:g}, review ${c.review_cost:g}, "
+        f"Costs: chargeback fee ${c.chargeback_fee:g}, friction ${c.friction_cost:g} + {c.lost_margin_rate:.0%} of the amount per false decline, review ${c.review_cost:g}, "
         f"review capacity {c.review_cap:.1%} of daily volume.\n",
         md_table(t, fmt),
         "\n\n**Three-tier policy driven by each model**\n",

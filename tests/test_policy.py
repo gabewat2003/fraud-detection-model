@@ -102,3 +102,14 @@ def test_policy_report_outputs(trained_paths):
     three = by_name["Model: three-tier with review cap"]
     assert three["total_cost"] <= by_name["Approve everything"]["total_cost"]
     assert (trained_paths.models / "policy.json").exists()
+
+
+def test_lost_margin_makes_declining_big_orders_expensive():
+    cm = C.model_copy(update={"lost_margin_rate": 0.25})
+    # $400 order: declining a good customer costs 5 + 0.25*400 = 105, approving fraud 415
+    be = P.break_even_probability([400.0], cm)[0]
+    assert be == pytest.approx(105 / (105 + 415))
+    # without the margin term the same order would be declined at p > 5/420 ~ 1.2%
+    assert P.break_even_probability([400.0], C)[0] == pytest.approx(5 / 420)
+    dec = np.array([P.DECLINE])
+    assert P.realized_cost(dec, np.array([0]), np.array([400.0]), cm)[0] == pytest.approx(105)

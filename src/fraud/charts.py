@@ -157,7 +157,7 @@ def policy_bars(table: pd.DataFrame) -> alt.Chart:
         alt.Chart(table)
         .mark_bar(color=SERIES[0], cornerRadiusEnd=4, height=18)
         .encode(
-            y=alt.Y("policy:N", sort=order, title=None),
+            y=alt.Y("policy:N", sort=order, title=None, axis=alt.Axis(labelLimit=400)),
             x=alt.X(
                 "total_cost:Q", title="Total cost on test (USD)", axis=alt.Axis(format="$,.0f")
             ),
@@ -176,17 +176,18 @@ def policy_bars(table: pd.DataFrame) -> alt.Chart:
 
 
 def sensitivity_heatmap(grid: pd.DataFrame, policy: str) -> alt.Chart:
-    """grid: friction_cost, chargeback_fee, review_cap, policy, savings."""
+    """grid: friction_cost, lost_margin_rate, review_cap, policy, savings."""
     d = grid[grid.policy == policy].copy()
     d["cap"] = (d.review_cap * 100).map(lambda v: f"review cap {v:g}%")
+    d["margin"] = d.lost_margin_rate.map(lambda v: f"{v:.0%}")
     base = alt.Chart().encode(
-        x=alt.X("friction_cost:O", title="Friction cost per false decline ($)"),
-        y=alt.Y("chargeback_fee:O", title="Chargeback fee ($)", sort="descending"),
+        x=alt.X("friction_cost:O", title="Fixed friction per false decline ($)"),
+        y=alt.Y("margin:O", title="Lost margin (share of amount)", sort=["50%", "25%", "10%"]),
     )
     rect = base.mark_rect(stroke=SURFACE, strokeWidth=2, cornerRadius=4).encode(
         color=alt.Color("savings:Q", scale=alt.Scale(range=SEQ_BLUE[1:]), title="Saving vs approve-all",
                         legend=alt.Legend(format=".0%")),
-        tooltip=["friction_cost:O", "chargeback_fee:O", "cap:N", alt.Tooltip("savings:Q", format=".1%")],
+        tooltip=["friction_cost:O", "margin:N", "cap:N", alt.Tooltip("savings:Q", format=".1%")],
     )  # fmt: skip
     text = base.mark_text(fontSize=12, fontWeight=500).encode(
         text=alt.Text("savings:Q", format=".0%"),

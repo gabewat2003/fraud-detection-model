@@ -1,11 +1,12 @@
 # Business cost assumptions (USD). These are ASSUMPTIONS, not observed numbers.
 # Every policy result is reported against these and re-run in the sensitivity grid.
 chargeback_fee: 15.0      # added to the transaction amount when fraud is approved
-friction_cost: 5.0        # cost of declining / challenging a legitimate customer
+friction_cost: 5.0        # fixed cost of wrongly declining a legitimate customer (support contact, churn risk)
+lost_margin_rate: 0.25    # share of the order amount lost when a legitimate order is declined (gross margin)
 review_cost: 3.0          # cost of one manual review (reviewer resolves correctly)
 review_cap: 0.01          # manual review capacity as a share of each day's volume
 
 sensitivity:
   friction_cost: [2.0, 5.0, 10.0]
-  chargeback_fee: [0.0, 15.0, 30.0]
+  lost_margin_rate: [0.10, 0.25, 0.50]
   review_cap: [0.005, 0.01, 0.02]

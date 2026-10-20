@@ -52,7 +52,17 @@ st.caption(f"Profile: **{paths.profile}** · champion model: **{MODEL_LABELS.get
 with st.sidebar:
     st.header("Cost assumptions")
     fee = st.slider("Chargeback fee ($)", 0.0, 50.0, base.chargeback_fee, 1.0)
-    friction = st.slider("Friction per false decline ($)", 0.0, 30.0, base.friction_cost, 0.5)
+    friction = st.slider("Fixed friction per false decline ($)", 0.0, 30.0, base.friction_cost, 0.5)
+    margin = (
+        st.slider(
+            "Lost margin on a declined order (% of amount)",
+            0,
+            60,
+            int(base.lost_margin_rate * 100),
+            5,
+        )
+        / 100
+    )
     review_cost = st.slider("Cost per manual review ($)", 0.5, 20.0, base.review_cost, 0.5)
     cap = (
         st.slider("Review capacity (% of daily volume)", 0.0, 5.0, base.review_cap * 100, 0.25)
@@ -62,7 +72,7 @@ with st.sidebar:
     model = st.selectbox("Model driving the policy", models, index=models.index(champion),
                          format_func=lambda m: MODEL_LABELS.get(m, m))  # fmt: skip
 
-c = base.model_copy(update={"chargeback_fee": fee, "friction_cost": friction, "review_cost": review_cost,
+c = base.model_copy(update={"chargeback_fee": fee, "friction_cost": friction, "lost_margin_rate": margin, "review_cost": review_cost,
                             "review_cap": cap})  # fmt: skip
 pc, pt = calib[f"pc_{model}"].to_numpy(), test[f"pc_{model}"].to_numpy()
 raw_c, raw_t = (
