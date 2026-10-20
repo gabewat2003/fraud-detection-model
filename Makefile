@@ -3,10 +3,16 @@
 #   make all            full pipeline on the Kaggle data in data/raw/
 #   make sample         full pipeline on generated synthetic data (no Kaggle account needed)
 
+# One venv per OS: a Windows venv (Scripts/python.exe) can't be used from WSL or Linux, and
+# vice versa, so they live in separate folders when the repo is shared between them.
 ifeq ($(OS),Windows_NT)
-  PY ?= .venv/Scripts/python.exe
+  VENV ?= .venv
+  PY ?= $(VENV)/Scripts/python.exe
+  BOOTSTRAP ?= python
 else
-  PY ?= .venv/bin/python
+  VENV ?= $(if $(wildcard .venv/Scripts/python.exe),.venv-linux,.venv)
+  PY ?= $(VENV)/bin/python
+  BOOTSTRAP ?= python3
 endif
 PROFILE ?= full
 CLI = $(PY) -m fraud.cli
@@ -15,8 +21,8 @@ MODELS_DIR ?= models
 .PHONY: setup data-check ingest features tune train evaluate policy explain backtest drift sql \
         report all sample notebooks dashboard api docker docker-run mlflow-ui test lint format clean-sample
 
-setup:            ## create .venv and install dependencies + the package
-	python -m venv .venv
+setup:            ## create the venv and install dependencies + the package
+	$(BOOTSTRAP) -m venv $(VENV)
 	$(PY) -m pip install --upgrade pip
 	$(PY) -m pip install -r requirements-dev.txt
 	$(PY) -m pip install -e . --no-deps
