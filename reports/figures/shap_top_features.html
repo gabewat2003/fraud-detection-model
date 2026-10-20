@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    #vis.vega-embed {
+      width: 100%;
+      display: flex;
+    }
+
+    #vis.vega-embed details,
+    #vis.vega-embed details summary {
+      position: relative;
+    }
+  </style>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega@6"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-lite@6.4.1"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-embed@7"></script>
+</head>
+<body>
+  <div id="vis"></div>
+  <script>
+    (function(vegaEmbed) {
+      var spec = {"config": {"background": "#fcfcfb", "view": {"stroke": null}, "font": "Inter, Segoe UI, Helvetica, Arial, sans-serif", "title": {"color": "#0b0b0b", "fontSize": 15, "fontWeight": 600, "anchor": "start", "subtitleColor": "#52514e", "subtitleFontSize": 12, "offset": 12}, "axis": {"labelColor": "#52514e", "titleColor": "#52514e", "gridColor": "#e6e5e1", "domainColor": "#e6e5e1", "tickColor": "#e6e5e1", "labelFontSize": 11, "titleFontSize": 12, "titleFontWeight": 500}, "legend": {"labelColor": "#52514e", "titleColor": "#52514e", "labelFontSize": 11, "orient": "top", "symbolStrokeWidth": 2}, "header": {"labelColor": "#0b0b0b", "titleColor": "#52514e", "labelFontSize": 12}, "line": {"strokeWidth": 2}, "range": {"category": ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"]}}, "data": {"name": "data-62a03874bdf991a7d193a903e30fdf8f"}, "mark": {"type": "bar", "cornerRadiusEnd": 4, "height": 14}, "encoding": {"color": {"field": "group", "scale": {"domain": ["masked", "velocity", "history", "text_norm", "known_raw", "frequency", "simple"], "range": ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6"]}, "sort": ["masked", "velocity", "history", "text_norm", "known_raw", "frequency", "simple"], "title": "Feature group", "type": "nominal"}, "tooltip": [{"field": "feature", "type": "nominal"}, {"field": "group", "type": "nominal"}, {"field": "mean_abs_shap", "format": ".3f", "type": "quantitative"}], "x": {"field": "mean_abs_shap", "title": "Mean |SHAP| (log-odds)", "type": "quantitative"}, "y": {"field": "feature", "sort": ["C13", "card6", "TransactionAmt", "V70", "freq_card1", "C1", "D2", "p_email_provider", "card_prior_n", "C14", "card1", "amt_cents", "C11", "V91", "D15", "C5", "freq_card2", "V294", "V30", "card1_n_addr_7d", "device_family", "card_prior_mean_amt", "amt_log", "card2", "freq_addr1"], "title": null, "type": "nominal"}}, "height": 450, "title": {"text": "What drives the champion model", "subtitle": "TreeSHAP on a test sample"}, "width": 400, "$schema": "https://vega.github.io/schema/vega-lite/v6.4.1.json", "datasets": {"data-62a03874bdf991a7d193a903e30fdf8f": [{"feature": "C13", "mean_abs_shap": 0.17738339017629337, "group": "masked", "interpretable": false, "gain": 27206.96100449562}, {"feature": "card6", "mean_abs_shap": 0.14761696967026575, "group": "known_raw", "interpretable": true, "gain": 5107.086770772934}, {"feature": "TransactionAmt", "mean_abs_shap": 0.13422647072863356, "group": "known_raw", "interpretable": true, "gain": 12568.134579181671}, {"feature": "V70", "mean_abs_shap": 0.12152973819231898, "group": "masked", "interpretable": false, "gain": 4604.730019569397}, {"feature": "freq_card1", "mean_abs_shap": 0.10695530651332211, "group": "frequency", "interpretable": true, "gain": 13940.481763839722}, {"feature": "C1", "mean_abs_shap": 0.10548840071960726, "group": "masked", "interpretable": false, "gain": 34064.82289934158}, {"feature": "D2", "mean_abs_shap": 0.10533485072045903, "group": "masked", "interpretable": false, "gain": 11329.001910448074}, {"feature": "p_email_provider", "mean_abs_shap": 0.0914070036607547, "group": "text_norm", "interpretable": true, "gain": 4249.853276491165}, {"feature": "card_prior_n", "mean_abs_shap": 0.08804843436840426, "group": "history", "interpretable": true, "gain": 8547.22450876236}, {"feature": "C14", "mean_abs_shap": 0.0879520248462037, "group": "masked", "interpretable": false, "gain": 21996.4117000103}, {"feature": "card1", "mean_abs_shap": 0.08146351875879877, "group": "known_raw", "interpretable": true, "gain": 16668.463644742966}, {"feature": "amt_cents", "mean_abs_shap": 0.08135086503606474, "group": "simple", "interpretable": true, "gain": 4190.632812738419}, {"feature": "C11", "mean_abs_shap": 0.07273692148453295, "group": "masked", "interpretable": false, "gain": 7354.900035381317}, {"feature": "V91", "mean_abs_shap": 0.06985182684922665, "group": "masked", "interpretable": false, "gain": 3432.8050322532654}, {"feature": "D15", "mean_abs_shap": 0.06702242546983332, "group": "masked", "interpretable": false, "gain": 9692.271658420563}, {"feature": "C5", "mean_abs_shap": 0.06499134090278053, "group": "masked", "interpretable": false, "gain": 3597.186304330826}, {"feature": "freq_card2", "mean_abs_shap": 0.0604059323594071, "group": "frequency", "interpretable": true, "gain": 10967.90438914299}, {"feature": "V294", "mean_abs_shap": 0.05557078272000133, "group": "masked", "interpretable": false, "gain": 12960.316169023514}, {"feature": "V30", "mean_abs_shap": 0.05512197223108459, "group": "masked", "interpretable": false, "gain": 2069.5018169879913}, {"feature": "card1_n_addr_7d", "mean_abs_shap": 0.053773508370744606, "group": "velocity", "interpretable": true, "gain": 6327.964427471161}, {"feature": "device_family", "mean_abs_shap": 0.05277963343783182, "group": "text_norm", "interpretable": true, "gain": 16721.827847242355}, {"feature": "card_prior_mean_amt", "mean_abs_shap": 0.05231103614743866, "group": "history", "interpretable": true, "gain": 12918.433029174805}, {"feature": "amt_log", "mean_abs_shap": 0.05176251542238325, "group": "simple", "interpretable": true, "gain": 5405.2412214279175}, {"feature": "card2", "mean_abs_shap": 0.05123808166141454, "group": "known_raw", "interpretable": true, "gain": 18238.571917533875}, {"feature": "freq_addr1", "mean_abs_shap": 0.04894253631531159, "group": "frequency", "interpretable": true, "gain": 12014.955793857574}]}};
+      var embedOpt = {"mode": "vega-lite"};
+
+      function showError(el, error){
+          el.innerHTML = ('<div style="color:red;">'
+                          + '<p>JavaScript Error: ' + error.message + '</p>'
+                          + "<p>This usually means there's a typo in your chart specification. "
+                          + "See the javascript console for the full traceback.</p>"
+                          + '</div>');
+          throw error;
+      }
+      const el = document.getElementById('vis');
+      vegaEmbed("#vis", spec, embedOpt)
+        .catch(error => showError(el, error));
+    })(vegaEmbed);
+
+  </script>
+</body>
+</html>

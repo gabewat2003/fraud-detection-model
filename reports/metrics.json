@@ -1,0 +1,149 @@
+{
+  "champion": "lgbm_tuned",
+  "table": [
+    {
+      "model": "Random (base rate)",
+      "test PR-AUC": 0.03480430340592226,
+      "ROC-AUC": 0.5,
+      "precision @1%": 0.03480430340592226,
+      "recall @1%": 0.01,
+      "$ recall @1%": 0.01,
+      "valid PR-AUC": NaN,
+      "recall @1% FPR": NaN,
+      "Brier (calibrated)": NaN,
+      "new-account PR-AUC": NaN,
+      "test PR-AUC 95% CI": NaN
+    },
+    {
+      "model": "LightGBM",
+      "test PR-AUC": 0.5181864991061569,
+      "ROC-AUC": 0.9003211248254649,
+      "precision @1%": 0.8882618510158014,
+      "recall @1%": 0.2552708400908206,
+      "$ recall @1%": 0.14760656142353087,
+      "valid PR-AUC": 0.643973469194711,
+      "recall @1% FPR": 0.4249108011676938,
+      "Brier (calibrated)": 0.022774592626730185,
+      "new-account PR-AUC": 0.5573729227908011,
+      "test PR-AUC 95% CI": ""
+    },
+    {
+      "model": "LightGBM (scale_pos_weight)",
+      "test PR-AUC": 0.5137907147750379,
+      "ROC-AUC": 0.888199826781205,
+      "precision @1%": 0.8871331828442438,
+      "recall @1%": 0.25494648070061626,
+      "$ recall @1%": 0.14928013199317566,
+      "valid PR-AUC": 0.6482092072448622,
+      "recall @1% FPR": 0.4265325981187155,
+      "Brier (calibrated)": 0.0228644763042429,
+      "new-account PR-AUC": 0.545136459493844,
+      "test PR-AUC 95% CI": ""
+    },
+    {
+      "model": "LightGBM (Optuna-tuned)",
+      "test PR-AUC": 0.5271340166575009,
+      "ROC-AUC": 0.9014812660012033,
+      "precision @1%": 0.8848758465011287,
+      "recall @1%": 0.2542977619202076,
+      "$ recall @1%": 0.144214531831291,
+      "valid PR-AUC": 0.6565937208562884,
+      "recall @1% FPR": 0.44048005189750244,
+      "Brier (calibrated)": 0.022434010966414723,
+      "new-account PR-AUC": 0.5565101089702892,
+      "test PR-AUC 95% CI": "0.481-0.567"
+    },
+    {
+      "model": "Ablation: raw text strings",
+      "test PR-AUC": 0.5223210757716947,
+      "ROC-AUC": 0.8989532408271086,
+      "precision @1%": 0.8860045146726863,
+      "recall @1%": 0.25462212131041195,
+      "$ recall @1%": 0.14466377623501425,
+      "valid PR-AUC": 0.6471944163705788,
+      "recall @1% FPR": 0.4352903016542329,
+      "Brier (calibrated)": 0.022591036173896517,
+      "new-account PR-AUC": 0.5590461379357553,
+      "test PR-AUC 95% CI": ""
+    },
+    {
+      "model": "Ablation: no velocity/history/freq",
+      "test PR-AUC": 0.5221500372535112,
+      "ROC-AUC": 0.8969662825344725,
+      "precision @1%": 0.891647855530474,
+      "recall @1%": 0.25624391826143367,
+      "$ recall @1%": 0.14912512628790223,
+      "valid PR-AUC": 0.6428551540562443,
+      "recall @1% FPR": 0.4313979889717807,
+      "Brier (calibrated)": 0.022722913120147917,
+      "new-account PR-AUC": 0.563395760199014,
+      "test PR-AUC 95% CI": ""
+    },
+    {
+      "model": "Ablation: interpretable features only",
+      "test PR-AUC": 0.2250604431192727,
+      "ROC-AUC": 0.8354653740831028,
+      "precision @1%": 0.4187358916478555,
+      "recall @1%": 0.12033733376581252,
+      "$ recall @1%": 0.1130493733098169,
+      "valid PR-AUC": 0.3499405258779666,
+      "recall @1% FPR": 0.16088225754135582,
+      "Brier (calibrated)": 0.030048106343328117,
+      "new-account PR-AUC": 0.23955664568685944,
+      "test PR-AUC 95% CI": ""
+    },
+    {
+      "model": "Rules engine",
+      "test PR-AUC": 0.034983773697722244,
+      "ROC-AUC": 0.47399040436740747,
+      "precision @1%": 0.013544018058690745,
+      "recall @1%": 0.003892312682452157,
+      "$ recall @1%": 0.0051333225275952766,
+      "valid PR-AUC": 0.059170714701745994,
+      "recall @1% FPR": 0.003892312682452157,
+      "Brier (calibrated)": 0.03360556839910152,
+      "new-account PR-AUC": 0.050936761533664256,
+      "test PR-AUC 95% CI": "0.031-0.040"
+    },
+    {
+      "model": "Logistic regression",
+      "test PR-AUC": 0.09764569629295511,
+      "ROC-AUC": 0.7729209448173467,
+      "precision @1%": 0.04853273137697517,
+      "recall @1%": 0.013947453778786896,
+      "$ recall @1%": 0.013601569635913824,
+      "valid PR-AUC": 0.15977108386180933,
+      "recall @1% FPR": 0.013947453778786896,
+      "Brier (calibrated)": 0.03269983377318267,
+      "new-account PR-AUC": 0.15090874348058056,
+      "test PR-AUC 95% CI": "0.081-0.131"
+    },
+    {
+      "model": "LightGBM (cost-weighted)",
+      "test PR-AUC": 0.5076790356400515,
+      "ROC-AUC": 0.8868861253463112,
+      "precision @1%": 0.881489841986456,
+      "recall @1%": 0.25332468374959455,
+      "$ recall @1%": 0.14707202044146894,
+      "valid PR-AUC": 0.6377998131771978,
+      "recall @1% FPR": 0.4255595199481025,
+      "Brier (calibrated)": 0.023060161033571808,
+      "new-account PR-AUC": 0.5422770055661165,
+      "test PR-AUC 95% CI": ""
+    }
+  ],
+  "pr_auc_ci": {
+    "rules": [
+      0.03131255309679046,
+      0.040341822160007465
+    ],
+    "lr": [
+      0.08058495962571532,
+      0.13055476120949444
+    ],
+    "lgbm_tuned": [
+      0.48146130123341957,
+      0.5666708688222032
+    ]
+  }
+}

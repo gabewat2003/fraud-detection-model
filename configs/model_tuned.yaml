@@ -1,0 +1,13 @@
+# Written by `fraud tune` (Optuna, validation PR-AUC). Picked up by `fraud train`.
+params:
+  num_leaves: 149
+  min_child_samples: 22
+  colsample_bytree: 0.6686754798472149
+  subsample: 0.8465719012246259
+  reg_lambda: 0.026493245833068887
+  reg_alpha: 0.0019423586897027228
+  min_split_gain: 0.013872604392706558
+  learning_rate: 0.05
+valid_pr_auc: 0.6565937208562884
+n_trials: 30
+profile: full

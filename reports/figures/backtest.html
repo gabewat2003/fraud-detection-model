@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    #vis.vega-embed {
+      width: 100%;
+      display: flex;
+    }
+
+    #vis.vega-embed details,
+    #vis.vega-embed details summary {
+      position: relative;
+    }
+  </style>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega@6"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-lite@6.4.1"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-embed@7"></script>
+</head>
+<body>
+  <div id="vis"></div>
+  <script>
+    (function(vegaEmbed) {
+      var spec = {"config": {"background": "#fcfcfb", "view": {"stroke": null}, "font": "Inter, Segoe UI, Helvetica, Arial, sans-serif", "title": {"color": "#0b0b0b", "fontSize": 15, "fontWeight": 600, "anchor": "start", "subtitleColor": "#52514e", "subtitleFontSize": 12, "offset": 12}, "axis": {"labelColor": "#52514e", "titleColor": "#52514e", "gridColor": "#e6e5e1", "domainColor": "#e6e5e1", "tickColor": "#e6e5e1", "labelFontSize": 11, "titleFontSize": 12, "titleFontWeight": 500}, "legend": {"labelColor": "#52514e", "titleColor": "#52514e", "labelFontSize": 11, "orient": "top", "symbolStrokeWidth": 2}, "header": {"labelColor": "#0b0b0b", "titleColor": "#52514e", "labelFontSize": 12}, "line": {"strokeWidth": 2}, "range": {"category": ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"]}}, "data": {"name": "data-ac476a15139bde14175d11bb0edf1d90"}, "mark": {"type": "line", "point": {"filled": true, "size": 60, "stroke": "#fcfcfb", "strokeWidth": 2}}, "encoding": {"color": {"field": "metric", "scale": {"domain": ["PR-AUC", "Recall in top 1%", "Fraud $ recall in top 1%"], "range": ["#2a78d6", "#eb6834", "#1baf7a"]}, "sort": ["PR-AUC", "Recall in top 1%", "Fraud $ recall in top 1%"], "title": null, "type": "nominal"}, "tooltip": [{"field": "test_window", "type": "ordinal"}, {"field": "metric", "type": "nominal"}, {"field": "value", "format": ".3f", "type": "quantitative"}], "x": {"field": "test_window", "title": "Scored window (30-day blocks)", "type": "ordinal"}, "y": {"field": "value", "scale": {"domain": [0, 1]}, "title": null, "type": "quantitative"}}, "height": 240, "title": {"text": "Rolling-origin backtest", "subtitle": "Train on all earlier windows, score the next one"}, "width": 520, "$schema": "https://vega.github.io/schema/vega-lite/v6.4.1.json", "datasets": {"data-ac476a15139bde14175d11bb0edf1d90": [{"test_window": 2, "metric": "PR-AUC", "value": 0.6381245531135663}, {"test_window": 3, "metric": "PR-AUC", "value": 0.5985810690633446}, {"test_window": 4, "metric": "PR-AUC", "value": 0.5928974801756749}, {"test_window": 5, "metric": "PR-AUC", "value": 0.5971345598004028}, {"test_window": 2, "metric": "Recall in top 1%", "value": 0.2403329752953813}, {"test_window": 3, "metric": "Recall in top 1%", "value": 0.23858388917393536}, {"test_window": 4, "metric": "Recall in top 1%", "value": 0.2712280701754386}, {"test_window": 5, "metric": "Recall in top 1%", "value": 0.2671601615074024}, {"test_window": 2, "metric": "Fraud $ recall in top 1%", "value": 0.18363933384170797}, {"test_window": 3, "metric": "Fraud $ recall in top 1%", "value": 0.14275888806688}, {"test_window": 4, "metric": "Fraud $ recall in top 1%", "value": 0.1860149905479026}, {"test_window": 5, "metric": "Fraud $ recall in top 1%", "value": 0.17336433500061804}]}};
+      var embedOpt = {"mode": "vega-lite"};
+
+      function showError(el, error){
+          el.innerHTML = ('<div style="color:red;">'
+                          + '<p>JavaScript Error: ' + error.message + '</p>'
+                          + "<p>This usually means there's a typo in your chart specification. "
+                          + "See the javascript console for the full traceback.</p>"
+                          + '</div>');
+          throw error;
+      }
+      const el = document.getElementById('vis');
+      vegaEmbed("#vis", spec, embedOpt)
+        .catch(error => showError(el, error));
+    })(vegaEmbed);
+
+  </script>
+</body>
+</html>

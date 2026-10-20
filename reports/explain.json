@@ -1,0 +1,224 @@
+{
+  "n_explained": 20000,
+  "group_share": {
+    "frequency": 0.04960009934058252,
+    "history": 0.05983650253475399,
+    "known_raw": 0.1532948367613098,
+    "masked": 0.5955271379692222,
+    "simple": 0.033325607931967934,
+    "text_norm": 0.0643118466257105,
+    "velocity": 0.044103968836453095
+  },
+  "interpretable_share": 0.40447286203077787,
+  "top_features": [
+    {
+      "feature": "C13",
+      "group": "masked",
+      "mean_abs_shap": 0.17738339017629337
+    },
+    {
+      "feature": "card6",
+      "group": "known_raw",
+      "mean_abs_shap": 0.14761696967026575
+    },
+    {
+      "feature": "TransactionAmt",
+      "group": "known_raw",
+      "mean_abs_shap": 0.13422647072863356
+    },
+    {
+      "feature": "V70",
+      "group": "masked",
+      "mean_abs_shap": 0.12152973819231898
+    },
+    {
+      "feature": "freq_card1",
+      "group": "frequency",
+      "mean_abs_shap": 0.10695530651332211
+    },
+    {
+      "feature": "C1",
+      "group": "masked",
+      "mean_abs_shap": 0.10548840071960726
+    },
+    {
+      "feature": "D2",
+      "group": "masked",
+      "mean_abs_shap": 0.10533485072045903
+    },
+    {
+      "feature": "p_email_provider",
+      "group": "text_norm",
+      "mean_abs_shap": 0.0914070036607547
+    },
+    {
+      "feature": "card_prior_n",
+      "group": "history",
+      "mean_abs_shap": 0.08804843436840426
+    },
+    {
+      "feature": "C14",
+      "group": "masked",
+      "mean_abs_shap": 0.0879520248462037
+    },
+    {
+      "feature": "card1",
+      "group": "known_raw",
+      "mean_abs_shap": 0.08146351875879877
+    },
+    {
+      "feature": "amt_cents",
+      "group": "simple",
+      "mean_abs_shap": 0.08135086503606474
+    },
+    {
+      "feature": "C11",
+      "group": "masked",
+      "mean_abs_shap": 0.07273692148453295
+    },
+    {
+      "feature": "V91",
+      "group": "masked",
+      "mean_abs_shap": 0.06985182684922665
+    },
+    {
+      "feature": "D15",
+      "group": "masked",
+      "mean_abs_shap": 0.06702242546983332
+    }
+  ],
+  "examples": [
+    {
+      "type": "caught_fraud",
+      "TransactionID": 3545361,
+      "p": 0.9989847387325199,
+      "reasons": [
+        {
+          "feature": "masked_vendor_signals",
+          "contribution": 10.6567,
+          "text": "masked vendor risk signals (V/C/D/M/id columns)"
+        },
+        {
+          "feature": "TransactionAmt",
+          "contribution": 0.4807,
+          "text": "transaction amount (USD): $300.00"
+        },
+        {
+          "feature": "r_email_provider",
+          "contribution": 0.4532,
+          "text": "recipient email provider (normalized): google"
+        }
+      ]
+    },
+    {
+      "type": "caught_fraud",
+      "TransactionID": 3519815,
+      "p": 0.9981300512064532,
+      "reasons": [
+        {
+          "feature": "masked_vendor_signals",
+          "contribution": 11.0957,
+          "text": "masked vendor risk signals (V/C/D/M/id columns)"
+        },
+        {
+          "feature": "TransactionAmt",
+          "contribution": 0.3773,
+          "text": "transaction amount (USD): $175.00"
+        },
+        {
+          "feature": "r_email_provider",
+          "contribution": 0.3124,
+          "text": "recipient email provider (normalized): google"
+        }
+      ]
+    },
+    {
+      "type": "caught_fraud",
+      "TransactionID": 3519799,
+      "p": 0.9978005095973862,
+      "reasons": [
+        {
+          "feature": "masked_vendor_signals",
+          "contribution": 10.8215,
+          "text": "masked vendor risk signals (V/C/D/M/id columns)"
+        },
+        {
+          "feature": "TransactionAmt",
+          "contribution": 0.3801,
+          "text": "transaction amount (USD): $175.00"
+        },
+        {
+          "feature": "r_email_provider",
+          "contribution": 0.3472,
+          "text": "recipient email provider (normalized): google"
+        }
+      ]
+    },
+    {
+      "type": "false_positive",
+      "TransactionID": 3568818,
+      "p": 0.9891059895126774,
+      "reasons": [
+        {
+          "feature": "masked_vendor_signals",
+          "contribution": 9.4078,
+          "text": "masked vendor risk signals (V/C/D/M/id columns)"
+        },
+        {
+          "feature": "card_prior_n",
+          "contribution": 0.2107,
+          "text": "number of earlier transactions on this card key: 2,605"
+        },
+        {
+          "feature": "card3",
+          "contribution": 0.1177,
+          "text": "card3: 185"
+        }
+      ]
+    },
+    {
+      "type": "false_positive",
+      "TransactionID": 3569749,
+      "p": 0.9868602726637759,
+      "reasons": [
+        {
+          "feature": "masked_vendor_signals",
+          "contribution": 7.8422,
+          "text": "masked vendor risk signals (V/C/D/M/id columns)"
+        },
+        {
+          "feature": "r_email_provider",
+          "contribution": 0.337,
+          "text": "recipient email provider (normalized): google"
+        },
+        {
+          "feature": "card6",
+          "contribution": 0.2264,
+          "text": "card type (debit/credit): credit"
+        }
+      ]
+    },
+    {
+      "type": "false_positive",
+      "TransactionID": 3516628,
+      "p": 0.9813521143691887,
+      "reasons": [
+        {
+          "feature": "masked_vendor_signals",
+          "contribution": 8.7675,
+          "text": "masked vendor risk signals (V/C/D/M/id columns)"
+        },
+        {
+          "feature": "device_family",
+          "contribution": 0.3424,
+          "text": "device family (normalized from DeviceInfo): lenovo"
+        },
+        {
+          "feature": "card6",
+          "contribution": 0.2821,
+          "text": "card type (debit/credit): credit"
+        }
+      ]
+    }
+  ]
+}

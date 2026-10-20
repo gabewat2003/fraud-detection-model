@@ -1,0 +1,76 @@
+{
+  "DeviceInfo -> device_family": {
+    "raw_levels": 1786,
+    "normalized_levels": 382,
+    "rows_non_null": 118666,
+    "row_coverage": 0.9815111320850117,
+    "top_unmapped": {
+      "KFFOWI Build/LVY48F": 65,
+      "Hisense F23 Build/NRD90M": 61,
+      "M4 SS4456 Build/LMY47V": 61,
+      "Hisense L675 Build/MRA58K": 60,
+      "es-us": 50,
+      "Ilium LT510 Build/MRA58K": 46,
+      "MDDRJS": 44,
+      "Ilium X510 Build/MRA58K": 37,
+      "M4 SS4453 Build/MMB29M": 37,
+      "KFDOWI Build/LVY48F": 37
+    }
+  },
+  "DeviceInfo -> device_brand": {
+    "raw_levels": 1786,
+    "normalized_levels": 19,
+    "rows_non_null": 118666,
+    "row_coverage": 0.9815111320850117,
+    "top_unmapped": {
+      "KFFOWI Build/LVY48F": 65,
+      "Hisense F23 Build/NRD90M": 61,
+      "M4 SS4456 Build/LMY47V": 61,
+      "Hisense L675 Build/MRA58K": 60,
+      "es-us": 50,
+      "Ilium LT510 Build/MRA58K": 46,
+      "MDDRJS": 44,
+      "Ilium X510 Build/MRA58K": 37,
+      "M4 SS4453 Build/MMB29M": 37,
+      "KFDOWI Build/LVY48F": 37
+    }
+  },
+  "id_30 -> os_family": {
+    "raw_levels": 75,
+    "normalized_levels": 6,
+    "rows_non_null": 77565,
+    "row_coverage": 0.9996776896796236,
+    "top_unmapped": {
+      "other": 15,
+      "func": 10
+    }
+  },
+  "id_31 -> browser_family": {
+    "raw_levels": 130,
+    "normalized_levels": 14,
+    "rows_non_null": 140282,
+    "row_coverage": 0.9973553271267874,
+    "top_unmapped": {
+      "other": 312,
+      "Microsoft/Windows": 25,
+      "mobile": 11,
+      "ZTE/Blade": 9,
+      "icedragon": 5,
+      "Lanix/Ilium": 3,
+      "Cherry": 1,
+      "Nokia/Lumia": 1,
+      "LG/K-200": 1,
+      "BLU/Dash": 1
+    }
+  },
+  "emaildomain -> email_provider": {
+    "raw_levels": 60,
+    "normalized_levels": 25,
+    "rows_non_null": 633375,
+    "row_coverage": 0.9995563449773042,
+    "top_unmapped": {
+      "cableone.net": 186,
+      "ptd.net": 95
+    }
+  }
+}

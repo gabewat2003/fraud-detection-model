@@ -1,0 +1,38 @@
+### 06_policy_outcomes
+
+Q: Under the recommended three-tier policy, what happens to each product line in the test window? Decision x outcome, with dollars. `decisions` is written by `fraud policy`.
+
+```sql
+-- Q: Under the recommended three-tier policy, what happens to each product line in the
+--    test window? Decision x outcome, with dollars. `decisions` is written by `fraud policy`.
+
+SELECT
+    s.ProductCD,
+    d.decision,
+    count(*)                                                AS transactions,
+    sum(s.isFraud)                                          AS frauds,
+    round(avg(s.isFraud), 4)                                AS fraud_rate,
+    round(sum(s.TransactionAmt) FILTER (WHERE s.isFraud = 1)) AS fraud_usd,
+    count(*) FILTER (WHERE s.isFraud = 0 AND d.decision = 'decline') AS good_customers_declined
+FROM scored AS s
+JOIN decisions AS d USING (TransactionID)
+WHERE s.split = 'test'
+GROUP BY ALL
+ORDER BY s.ProductCD, d.decision;
+```
+
+| ProductCD | decision | transactions | frauds | fraud_rate | fraud_usd | good_customers_declined |
+|---|---|---|---|---|---|---|
+| C | approve | 7859 | 308.0 | 0.0392 | 13323.0 | 0 |
+| C | decline | 1529 | 962.0 | 0.6292 | 47645.0 | 567 |
+| H | approve | 2359 | 67.0 | 0.0284 | 7600.0 | 0 |
+| H | decline | 189 | 91.0 | 0.4815 | 13460.0 | 98 |
+| H | review | 14 | 6.0 | 0.4286 | 2700.0 | 0 |
+| R | approve | 3939 | 42.0 | 0.0107 | 6300.0 | 0 |
+| R | decline | 221 | 155.0 | 0.7014 | 39875.0 | 66 |
+| R | review | 30 | 15.0 | 0.5 | 8325.0 | 0 |
+| S | approve | 2867 | 82.0 | 0.0286 | 3900.0 | 0 |
+| S | decline | 106 | 62.0 | 0.5849 | 2395.0 | 44 |
+| W | approve | 68004 | 969.0 | 0.0142 | 175470.0 | 0 |
+| W | decline | 601 | 170.0 | 0.2829 | 18536.0 | 431 |
+| W | review | 863 | 154.0 | 0.1784 | 130079.0 | 0 |

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    #vis.vega-embed {
+      width: 100%;
+      display: flex;
+    }
+
+    #vis.vega-embed details,
+    #vis.vega-embed details summary {
+      position: relative;
+    }
+  </style>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega@6"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-lite@6.4.1"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-embed@7"></script>
+</head>
+<body>
+  <div id="vis"></div>
+  <script>
+    (function(vegaEmbed) {
+      var spec = {"config": {"background": "#fcfcfb", "view": {"stroke": null}, "font": "Inter, Segoe UI, Helvetica, Arial, sans-serif", "title": {"color": "#0b0b0b", "fontSize": 15, "fontWeight": 600, "anchor": "start", "subtitleColor": "#52514e", "subtitleFontSize": 12, "offset": 12}, "axis": {"labelColor": "#52514e", "titleColor": "#52514e", "gridColor": "#e6e5e1", "domainColor": "#e6e5e1", "tickColor": "#e6e5e1", "labelFontSize": 11, "titleFontSize": 12, "titleFontWeight": 500}, "legend": {"labelColor": "#52514e", "titleColor": "#52514e", "labelFontSize": 11, "orient": "top", "symbolStrokeWidth": 2}, "header": {"labelColor": "#0b0b0b", "titleColor": "#52514e", "labelFontSize": 12}, "line": {"strokeWidth": 2}, "range": {"category": ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"]}}, "layer": [{"mark": {"type": "bar", "color": "#2a78d6", "cornerRadiusEnd": 4, "height": 18}, "encoding": {"tooltip": [{"field": "group", "type": "nominal"}, {"field": "share", "format": ".1%", "type": "quantitative"}], "x": {"axis": {"format": "%"}, "field": "share", "title": "Share of total |SHAP|", "type": "quantitative"}, "y": {"field": "group", "sort": ["masked", "known_raw", "text_norm", "history", "frequency", "velocity", "simple"], "title": null, "type": "nominal"}}}, {"mark": {"type": "text", "align": "left", "color": "#52514e", "dx": 4}, "encoding": {"text": {"field": "share", "format": ".0%", "type": "quantitative"}, "tooltip": [{"field": "group", "type": "nominal"}, {"field": "share", "format": ".1%", "type": "quantitative"}], "x": {"axis": {"format": "%"}, "field": "share", "title": "Share of total |SHAP|", "type": "quantitative"}, "y": {"field": "group", "sort": ["masked", "known_raw", "text_norm", "history", "frequency", "velocity", "simple"], "title": null, "type": "nominal"}}}], "data": {"name": "data-edd1665515074e0a56bc6bd7bf34b726"}, "height": 210, "title": {"text": "Attribution by feature group", "subtitle": "Masked = vendor V/C/D/M/id columns"}, "width": 400, "$schema": "https://vega.github.io/schema/vega-lite/v6.4.1.json", "datasets": {"data-edd1665515074e0a56bc6bd7bf34b726": [{"group": "frequency", "share": 0.04960009934058252}, {"group": "history", "share": 0.05983650253475399}, {"group": "known_raw", "share": 0.1532948367613098}, {"group": "masked", "share": 0.5955271379692222}, {"group": "simple", "share": 0.033325607931967934}, {"group": "text_norm", "share": 0.0643118466257105}, {"group": "velocity", "share": 0.044103968836453095}]}};
+      var embedOpt = {"mode": "vega-lite"};
+
+      function showError(el, error){
+          el.innerHTML = ('<div style="color:red;">'
+                          + '<p>JavaScript Error: ' + error.message + '</p>'
+                          + "<p>This usually means there's a typo in your chart specification. "
+                          + "See the javascript console for the full traceback.</p>"
+                          + '</div>');
+          throw error;
+      }
+      const el = document.getElementById('vis');
+      vegaEmbed("#vis", spec, embedOpt)
+        .catch(error => showError(el, error));
+    })(vegaEmbed);
+
+  </script>
+</body>
+</html>

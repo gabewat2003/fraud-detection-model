@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    #vis.vega-embed {
+      width: 100%;
+      display: flex;
+    }
+
+    #vis.vega-embed details,
+    #vis.vega-embed details summary {
+      position: relative;
+    }
+  </style>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega@6"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-lite@6.4.1"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-embed@7"></script>
+</head>
+<body>
+  <div id="vis"></div>
+  <script>
+    (function(vegaEmbed) {
+      var spec = {"config": {"background": "#fcfcfb", "view": {"stroke": null}, "font": "Inter, Segoe UI, Helvetica, Arial, sans-serif", "title": {"color": "#0b0b0b", "fontSize": 15, "fontWeight": 600, "anchor": "start", "subtitleColor": "#52514e", "subtitleFontSize": 12, "offset": 12}, "axis": {"labelColor": "#52514e", "titleColor": "#52514e", "gridColor": "#e6e5e1", "domainColor": "#e6e5e1", "tickColor": "#e6e5e1", "labelFontSize": 11, "titleFontSize": 12, "titleFontWeight": 500}, "legend": {"labelColor": "#52514e", "titleColor": "#52514e", "labelFontSize": 11, "orient": "top", "symbolStrokeWidth": 2}, "header": {"labelColor": "#0b0b0b", "titleColor": "#52514e", "labelFontSize": 12}, "line": {"strokeWidth": 2}, "range": {"category": ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"]}}, "data": {"name": "data-be9c15148c150f73cd5ef543cb485bae"}, "mark": {"type": "line"}, "encoding": {"color": {"field": "series", "scale": {"domain": ["reviews", "capacity"], "range": ["#2a78d6", "#eb6834"]}, "sort": ["reviews", "capacity"], "title": null, "type": "nominal"}, "strokeDash": {"field": "series", "legend": null, "scale": {"domain": ["reviews", "capacity"], "range": [[1, 0], [4, 4]]}, "type": "nominal"}, "tooltip": [{"field": "day", "type": "quantitative"}, {"field": "series", "type": "nominal"}, {"field": "count", "type": "quantitative"}], "x": {"field": "day", "title": "Day (relative)", "type": "quantitative"}, "y": {"field": "count", "title": "Cases per day", "type": "quantitative"}}, "height": 220, "title": {"text": "Daily manual-review queue vs capacity", "subtitle": "Threshold fit on calib; test days shown"}, "width": 520, "$schema": "https://vega.github.io/schema/vega-lite/v6.4.1.json", "datasets": {"data-be9c15148c150f73cd5ef543cb485bae": [{"day": 152, "series": "reviews", "count": 29.0}, {"day": 153, "series": "reviews", "count": 39.0}, {"day": 154, "series": "reviews", "count": 31.0}, {"day": 155, "series": "reviews", "count": 41.0}, {"day": 156, "series": "reviews", "count": 31.0}, {"day": 157, "series": "reviews", "count": 20.0}, {"day": 158, "series": "reviews", "count": 22.0}, {"day": 159, "series": "reviews", "count": 23.0}, {"day": 160, "series": "reviews", "count": 35.0}, {"day": 161, "series": "reviews", "count": 21.0}, {"day": 162, "series": "reviews", "count": 25.0}, {"day": 163, "series": "reviews", "count": 13.0}, {"day": 164, "series": "reviews", "count": 17.0}, {"day": 165, "series": "reviews", "count": 38.0}, {"day": 166, "series": "reviews", "count": 28.0}, {"day": 167, "series": "reviews", "count": 40.0}, {"day": 168, "series": "reviews", "count": 47.0}, {"day": 169, "series": "reviews", "count": 28.0}, {"day": 170, "series": "reviews", "count": 21.0}, {"day": 171, "series": "reviews", "count": 15.0}, {"day": 172, "series": "reviews", "count": 35.0}, {"day": 173, "series": "reviews", "count": 32.0}, {"day": 174, "series": "reviews", "count": 33.0}, {"day": 175, "series": "reviews", "count": 35.0}, {"day": 176, "series": "reviews", "count": 40.0}, {"day": 177, "series": "reviews", "count": 16.0}, {"day": 178, "series": "reviews", "count": 24.0}, {"day": 179, "series": "reviews", "count": 23.0}, {"day": 180, "series": "reviews", "count": 29.0}, {"day": 181, "series": "reviews", "count": 41.0}, {"day": 182, "series": "reviews", "count": 35.0}, {"day": 152, "series": "capacity", "count": 31.0}, {"day": 153, "series": "capacity", "count": 31.0}, {"day": 154, "series": "capacity", "count": 37.0}, {"day": 155, "series": "capacity", "count": 33.0}, {"day": 156, "series": "capacity", "count": 25.0}, {"day": 157, "series": "capacity", "count": 22.0}, {"day": 158, "series": "capacity", "count": 30.0}, {"day": 159, "series": "capacity", "count": 28.0}, {"day": 160, "series": "capacity", "count": 28.0}, {"day": 161, "series": "capacity", "count": 28.0}, {"day": 162, "series": "capacity", "count": 32.0}, {"day": 163, "series": "capacity", "count": 28.0}, {"day": 164, "series": "capacity", "count": 29.0}, {"day": 165, "series": "capacity", "count": 30.0}, {"day": 166, "series": "capacity", "count": 29.0}, {"day": 167, "series": "capacity", "count": 30.0}, {"day": 168, "series": "capacity", "count": 29.0}, {"day": 169, "series": "capacity", "count": 31.0}, {"day": 170, "series": "capacity", "count": 24.0}, {"day": 171, "series": "capacity", "count": 27.0}, {"day": 172, "series": "capacity", "count": 31.0}, {"day": 173, "series": "capacity", "count": 28.0}, {"day": 174, "series": "capacity", "count": 28.0}, {"day": 175, "series": "capacity", "count": 26.0}, {"day": 176, "series": "capacity", "count": 30.0}, {"day": 177, "series": "capacity", "count": 23.0}, {"day": 178, "series": "capacity", "count": 20.0}, {"day": 179, "series": "capacity", "count": 21.0}, {"day": 180, "series": "capacity", "count": 26.0}, {"day": 181, "series": "capacity", "count": 27.0}, {"day": 182, "series": "capacity", "count": 27.0}]}};
+      var embedOpt = {"mode": "vega-lite"};
+
+      function showError(el, error){
+          el.innerHTML = ('<div style="color:red;">'
+                          + '<p>JavaScript Error: ' + error.message + '</p>'
+                          + "<p>This usually means there's a typo in your chart specification. "
+                          + "See the javascript console for the full traceback.</p>"
+                          + '</div>');
+          throw error;
+      }
+      const el = document.getElementById('vis');
+      vegaEmbed("#vis", spec, embedOpt)
+        .catch(error => showError(el, error));
+    })(vegaEmbed);
+
+  </script>
+</body>
+</html>

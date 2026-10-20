@@ -16,7 +16,10 @@ many cases a review team can handle in a day.
 ## Results at a glance
 
 <!-- BEGIN:headline -->
-_Not generated yet: run `make all` on the Kaggle data, then `make writeup`._
+- **48.3% lower fraud + friction cost** than approving everything on the held-out test window (95% CI 44.1% to 52.3%, day-block bootstrap), and 48.6% lower than a hand-written rules engine.
+- Stops **56.0% of fraud dollars** while declining **1.41% of legitimate customers** and sending 1.02% of traffic to manual review (cap 1.0%).
+- 37.8% cheaper than the common 'decline the top 1% of scores' rule: declines follow expected cost, and the most uncertain high-value cases go to manual review.
+- Model: LightGBM (Optuna-tuned), test PR-AUC **0.527** (95% CI 0.481-0.567) against a 0.035 base rate.
 <!-- END:headline -->
 
 ![Total cost by policy](reports/figures/policy_costs.png)
@@ -84,14 +87,22 @@ meaning is known when it explains decisions, and says so plainly when it can't.
 rest and change the population the model learns from:
 
 <!-- BEGIN:sql_identity -->
-_Not generated yet: run `make all` on the Kaggle data, then `make writeup`._
+| population | transactions | share_of_rows | fraud_rate | fraud_usd | share_of_fraud_usd | median_amount |
+|---|---|---|---|---|---|---|
+| kept by INNER join (has identity) | 144233 | 0.2442 | 0.0785 | 1005155.0 | 0.3259 | 50.0 |
+| dropped by INNER join (no identity) | 446307 | 0.7558 | 0.0209 | 2078689.0 | 0.6741 | 77.95 |
 <!-- END:sql_identity -->
 
 **The time split.** Fraud patterns shift as attackers adapt, and a random split would put the same card in
 train and test. Splits follow time, with a separate window for every decision that is tuned:
 
 <!-- BEGIN:splits -->
-_Not generated yet: run `make all` on the Kaggle data, then `make writeup`._
+| split | rows | fraud_rate | fraud_usd | first_day | last_day |
+|---|---|---|---|---|---|
+| train | 354324 | 0.0338 | 1,677,791 | 1 | 101 |
+| valid | 88581 | 0.0404 | 615,011 | 101 | 130 |
+| calib | 59054 | 0.0342 | 321,435 | 130 | 152 |
+| test | 88581 | 0.0348 | 469,609 | 152 | 182 |
 <!-- END:splits -->
 
 | Split | Used for |
@@ -139,19 +150,60 @@ the DuckDB feature table with `make sql`. Results land in [`reports/sql/`](repor
 **Fraud rate by cohort** ([`01_fraud_rate_by_cohort.sql`](sql/analysis/01_fraud_rate_by_cohort.sql)):
 
 <!-- BEGIN:sql_cohorts -->
-_Not generated yet: run `make all` on the Kaggle data, then `make writeup`._
+| dimension | value | transactions | fraud_rate | lift | fraud_usd |
+|---|---|---|---|---|---|
+| DeviceType | mobile | 55645 | 0.1017 | 2.91 | 546427.0 |
+| DeviceType | desktop | 85165 | 0.0652 | 1.86 | 449879.0 |
+| DeviceType | (no identity) | 449730 | 0.021 | 0.6 | 2087538.0 |
+| ProductCD | C | 68519 | 0.1169 | 3.34 | 391421.0 |
+| ProductCD | S | 11628 | 0.059 | 1.69 | 43416.0 |
+| ProductCD | H | 33024 | 0.0477 | 1.36 | 246632.0 |
+| ProductCD | R | 37699 | 0.0378 | 1.08 | 348050.0 |
+| ProductCD | W | 439670 | 0.0204 | 0.58 | 2054325.0 |
+| card4 | discover | 6651 | 0.0773 | 2.21 | 182000.0 |
+| card4 | visa | 384767 | 0.0348 | 0.99 | 1997706.0 |
+| card4 | mastercard | 189217 | 0.0343 | 0.98 | 855739.0 |
+| card4 | american express | 8328 | 0.0287 | 0.82 | 42798.0 |
+| card4 | (missing) | 1577 | 0.026 | 0.74 | 5601.0 |
+| card6 | credit | 148986 | 0.0668 | 1.91 | 1656751.0 |
+| card6 | (missing) | 1571 | 0.0248 | 0.71 | 5051.0 |
+| card6 | debit | 439938 | 0.0243 | 0.69 | 1422042.0 |
+| has_identity | 1 | 144233 | 0.0785 | 2.24 | 1005155.0 |
+| has_identity | 0 | 446307 | 0.0209 | 0.6 | 2078689.0 |
 <!-- END:sql_cohorts -->
 
 **Card testing** ([`05_card_testing.sql`](sql/analysis/05_card_testing.sql)): fraud rate by amount band and by
 how often the card was used in the previous hour:
 
 <!-- BEGIN:sql_card_testing -->
-_Not generated yet: run `make all` on the Kaggle data, then `make writeup`._
+| amount_band | card_velocity_1h | transactions | fraud_rate |
+|---|---|---|---|
+| < $10 | 0 prior in 1h | 3429 | 0.0782 |
+| < $10 | 3+ prior in 1h | 1310 | 0.0855 |
+| < $10 | 1-2 prior in 1h | 2056 | 0.0905 |
+| $10-50 | 0 prior in 1h | 131311 | 0.0289 |
+| $10-50 | 1-2 prior in 1h | 37323 | 0.0592 |
+| $10-50 | 3+ prior in 1h | 12086 | 0.0747 |
+| $50-200 | 0 prior in 1h | 232586 | 0.0239 |
+| $50-200 | 1-2 prior in 1h | 56645 | 0.0423 |
+| $50-200 | 3+ prior in 1h | 13324 | 0.0499 |
+| $200+ | 0 prior in 1h | 77475 | 0.041 |
+| $200+ | 1-2 prior in 1h | 19465 | 0.0595 |
+| $200+ | 3+ prior in 1h | 3530 | 0.0649 |
 <!-- END:sql_card_testing -->
 
-<!-- DRAFT: 2-3 sentences on what surprised you in the EDA (notebooks/01_eda.ipynb) -->
-_DRAFT: the most informative things the exploration showed, e.g. which product codes and device types carry
-most of the fraud, how identity presence changes the fraud rate, and whether missingness itself is a signal._
+<!-- DRAFT: rewrite in your own voice (source: notebooks/01_eda.ipynb) -->
+What stood out in the exploration ([`notebooks/01_eda.ipynb`](notebooks/01_eda.ipynb)):
+
+- **Missing data is a signal, not just a nuisance.** Transactions with an identity record are fraud 7.8% of the
+  time vs 2.1% without, and for several masked columns (`D7`, `D12`-`D14`, `id_03`-`id_10`) the fraud rate is 4-5x
+  higher when the value is *present*. Imputing those away would throw signal out.
+- **One product line carries a disproportionate share.** `ProductCD = C` is 12% of transactions but has a 11.7%
+  fraud rate (3.3x the average); mobile devices run at 10%.
+- **Cents tell a story.** Retail-style prices ending in .95-.99 are fraud only 0.9% of the time, whole-dollar
+  amounts 3.6%, and "odd" cents (.01-.95) 6.6-9.9%, plausibly currency-converted orders.
+- **Card testing is visible but small.** Under $10 the fraud rate is 8-9% whatever the velocity; above $10, a card
+  used 3+ times in the previous hour has a 1.6-2.6x higher fraud rate. But sub-$10 transactions are only ~1% of volume.
 
 Other queries: daily KPI table with a trailing 7-day fraud rate ([`03_daily_kpis.sql`](sql/analysis/03_daily_kpis.sql)),
 highest-risk product x email-provider x device segments ([`04_top_risk_segments.sql`](sql/analysis/04_top_risk_segments.sql)),
@@ -214,19 +266,36 @@ string, so the batch pipeline (lookup tables over a few thousand distinct values
 share them. [`tests/test_text_norm.py`](tests/test_text_norm.py) holds ~50 table-driven cases.
 
 <!-- BEGIN:textnorm -->
-_Not generated yet: run `make all` on the Kaggle data, then `make writeup`._
+| mapping | raw levels | normalized levels | rows mapped |
+|---|---|---|---|
+| DeviceInfo -> device_family | 1786 | 382 | 98.2% |
+| DeviceInfo -> device_brand | 1786 | 19 | 98.2% |
+| id_30 -> os_family | 75 | 6 | 100.0% |
+| id_31 -> browser_family | 130 | 14 | 99.7% |
+| emaildomain -> email_provider | 60 | 25 | 100.0% |
 <!-- END:textnorm -->
 
 **Did it help the model?** Ablations retrain the same LightGBM with one change each:
 
 <!-- BEGIN:ablation -->
-_Not generated yet: run `make all` on the Kaggle data, then `make writeup`._
+| variant | features | test PR-AUC | three-tier cost |
+|---|---|---|---|
+| LightGBM | 476 | 0.5182 | $261,046 |
+| Ablation: raw text strings | 463 | 0.5223 | $263,926 |
+| Ablation: no velocity/history/freq | 450 | 0.5222 | $265,878 |
+| Ablation: interpretable features only | 63 | 0.2251 | $356,257 |
 <!-- END:ablation -->
 
-<!-- DRAFT: interpret the ablation honestly once you have numbers -->
-_DRAFT: say what the raw-text ablation showed. If normalization barely moves PR-AUC, say so: gradient boosting
-can partly learn raw categories, and the remaining benefits are fewer, more stable levels and reason codes a
-person can read. Details in [`notebooks/03_text_normalization.ipynb`](notebooks/03_text_normalization.ipynb)._
+<!-- DRAFT: rewrite in your own voice -->
+**Honest result: normalization did not improve the score.** The raw-string model scored slightly higher
+(0.522 vs 0.518 test PR-AUC), a gap well inside the bootstrap noise. Gradient boosting can learn useful splits on
+raw categories by itself, and the masked vendor columns already carry most of the device signal. What
+normalization does buy is engineering value rather than accuracy: 1,786 device strings become 19 brands, so a
+spelling never seen in training still maps to a known brand in production, and reason codes can say "device
+brand: huawei" instead of "DeviceInfo: CAM-L03 Build/HUAWEICAM-L03". The same pattern holds for the velocity and
+history features: removing them doesn't hurt (0.522), because the masked `C*`/`D*` columns appear to encode the
+same behavior. Removing every masked column does hurt (0.225): the explainable features alone recover less than
+half of the model's performance. Details in [`notebooks/03_text_normalization.ipynb`](notebooks/03_text_normalization.ipynb).
 
 ## 7. Models
 
@@ -244,7 +313,18 @@ All models are calibrated with isotonic regression on the calib split; the champ
 LightGBM variant with the best **validation** PR-AUC.
 
 <!-- BEGIN:metrics -->
-_Not generated yet: run `make all` on the Kaggle data, then `make writeup`._
+| model | test PR-AUC | ROC-AUC | precision @1% | recall @1% | $ recall @1% | valid PR-AUC | recall @1% FPR | Brier (calibrated) | new-account PR-AUC | test PR-AUC 95% CI |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Random (base rate) | 0.035 | 0.500 | 0.035 | 0.010 | 0.010 |  |  |  |  |  |
+| LightGBM | 0.518 | 0.900 | 0.888 | 0.255 | 0.148 | 0.644 | 0.425 | 0.023 | 0.557 |  |
+| LightGBM (scale_pos_weight) | 0.514 | 0.888 | 0.887 | 0.255 | 0.149 | 0.648 | 0.427 | 0.023 | 0.545 |  |
+| LightGBM (Optuna-tuned) | 0.527 | 0.901 | 0.885 | 0.254 | 0.144 | 0.657 | 0.440 | 0.022 | 0.557 | 0.481-0.567 |
+| Ablation: raw text strings | 0.522 | 0.899 | 0.886 | 0.255 | 0.145 | 0.647 | 0.435 | 0.023 | 0.559 |  |
+| Ablation: no velocity/history/freq | 0.522 | 0.897 | 0.892 | 0.256 | 0.149 | 0.643 | 0.431 | 0.023 | 0.563 |  |
+| Ablation: interpretable features only | 0.225 | 0.835 | 0.419 | 0.120 | 0.113 | 0.350 | 0.161 | 0.030 | 0.240 |  |
+| Rules engine | 0.035 | 0.474 | 0.014 | 0.004 | 0.005 | 0.059 | 0.004 | 0.034 | 0.051 | 0.031-0.040 |
+| Logistic regression | 0.098 | 0.773 | 0.049 | 0.014 | 0.014 | 0.160 | 0.014 | 0.033 | 0.151 | 0.081-0.131 |
+| LightGBM (cost-weighted) | 0.508 | 0.887 | 0.881 | 0.253 | 0.147 | 0.638 | 0.426 | 0.023 | 0.542 |  |
 <!-- END:metrics -->
 
 PR-AUC is the headline metric because a random model scores about the base rate on it, while ROC-AUC looks
@@ -261,20 +341,28 @@ bootstrap that resamples whole days, since transactions on the same day are corr
 
 ## 8. From scores to decisions
 
-Cost assumptions ([`configs/costs.yaml`](configs/costs.yaml)) are explicit and varied below: chargeback fee $15,
-friction $5 per wrongly declined customer, $3 per manual review, review capacity 1% of daily volume.
+Cost assumptions ([`configs/costs.yaml`](configs/costs.yaml)) are explicit and varied below: chargeback fee $15;
+a wrongly declined customer costs $5 of friction **plus 25% of the order amount** (the margin on the lost sale);
+$3 per manual review; review capacity 1% of daily volume.
 
 For a transaction with calibrated fraud probability *p* and amount *a*:
 
 ```
 E[cost | approve] = p * (a + fee)
-E[cost | decline] = (1 - p) * friction
+E[cost | decline] = (1 - p) * (friction + margin * a)
 E[cost | review]  = review_cost            (reviewer assumed to resolve correctly)
 ```
 
-Declining beats approving when `p > friction / (friction + a + fee)`. **The break-even probability falls as the
-amount rises**: a $5 purchase needs p > 0.20 to be worth declining, a $2,000 one only p > 0.0025. One global
-cutoff can't do that.
+Declining beats approving when `p > (friction + margin*a) / (friction + margin*a + a + fee)`: about 0.24 for a $5
+order, falling to 0.20 for large ones.
+
+<!-- DRAFT: this is a good story to tell in your own words -->
+**The lost-margin term was a correction, not part of the first design.** The first version charged a flat $5 for
+every false decline. Declining a $500 order then looked as cheap as declining a $5 one, so the "optimal" policy
+declined **15.5% of legitimate customers**: cheap on paper, unacceptable in practice. A declined order also loses
+the sale, so the decline cost has to grow with the amount. With that fixed, false declines dropped to about 1.4%,
+and it turned out that most of the value comes from the **review tier**: sending the most uncertain high-value
+cases to a person, within capacity.
 
 Policies compared (all thresholds fit on calib, results on test):
 
@@ -288,19 +376,56 @@ Policies compared (all thresholds fit on calib, results on test):
 | **Model: three-tier with review cap** | as above, plus review where it saves the most, with the review bar set so volume fits capacity |
 
 <!-- BEGIN:policy -->
-_Not generated yet: run `make all` on the Kaggle data, then `make writeup`._
+Costs: chargeback fee $15, friction $5 + 25% of the amount per false decline, review $3, review capacity 1.0% of daily volume.
+| Policy | Fraud $ stopped | Fraud $ missed | Good customers declined | False-decline rate | Reviews | Total cost | Saving vs approve-all | Saving 95% CI | Saving vs top-1% |
+|---|---|---|---|---|---|---|---|---|---|
+| Approve everything | $0 | $469,609 | 0 | 0.00% | 0 | $515,854 | 0.0% |  | -20.3% |
+| Rules engine (2+ rules decline, 1 rule review) | $3,441 | $466,167 | 0 | 0.00% | 2,320 | $518,517 | -0.5% | -1.6% to 0.3% | -20.9% |
+| Model: decline top 1% | $78,901 | $390,707 | 163 | 0.19% | 0 | $428,738 | 16.9% | 13.5% to 20.7% | 0.0% |
+| Model: best flat threshold | $218,043 | $251,565 | 2,099 | 2.46% | 0 | $381,818 | 26.0% | 20.3% to 31.2% | 10.9% |
+| Model: amount-aware decline | $183,162 | $286,447 | 1,369 | 1.60% | 0 | $378,057 | 26.7% | 22.0% to 31.4% | 11.8% |
+| Model: three-tier with review cap | $263,015 | $206,593 | 1,206 | 1.41% | 907 | $266,532 | 48.3% | 44.1% to 52.3% | 37.8% |
+
+**Three-tier policy driven by each model**
+| Model | Total cost | Saving vs approve-all | Fraud $ recall | False-decline rate | Review rate |
+|---|---|---|---|---|---|
+| LightGBM | $261,046 | 49.4% | 57.3% | 1.53% | 1.08% |
+| Ablation: raw text strings | $263,926 | 48.8% | 56.1% | 1.32% | 1.08% |
+| Ablation: no velocity/history/freq | $265,878 | 48.5% | 59.8% | 2.10% | 1.11% |
+| LightGBM (Optuna-tuned) | $266,532 | 48.3% | 56.0% | 1.41% | 1.02% |
+| LightGBM (scale_pos_weight) | $276,422 | 46.4% | 52.7% | 1.17% | 1.05% |
+| LightGBM (cost-weighted) | $296,102 | 42.6% | 47.3% | 1.27% | 1.05% |
+| Ablation: interpretable features only | $356,257 | 30.9% | 41.4% | 1.95% | 1.15% |
+| Logistic regression | $460,535 | 10.7% | 24.3% | 2.34% | 1.15% |
+| Rules engine | $468,578 | 9.2% | 10.6% | 0.00% | 1.03% |
+
+**Break-even decline probability by amount**
+| amount | decline if p > |
+|---|---|
+| $5 | 0.238 |
+| $25 | 0.220 |
+| $100 | 0.207 |
+| $500 | 0.202 |
+| $2,000 | 0.200 |
+
+**Review queue (three-tier, test window):** mean 1.03% of daily volume, max 1.59%; 17 of 31 days above capacity (128 overflow cases).
+
+Thresholds fit on calib: {"top_1pct_threshold": 0.62083, "cost_optimal_flat_threshold": 0.10352, "review_benefit_threshold": 56.86022, "rules_review_amount_bar": 0.0}
 <!-- END:policy -->
 
 ![Cost curve](reports/figures/cost_curve.png)
 
-**Sensitivity.** The costs are assumptions, so the policy is re-fit for 27 combinations of friction
-($2/$5/$10), chargeback fee ($0/$15/$30) and review capacity (0.5/1/2%):
+**Sensitivity.** The costs are assumptions, so the policy is re-fit for 27 combinations of fixed
+friction ($2/$5/$10), lost margin (10/25/50% of the amount) and review capacity (0.5/1/2%):
 
 ![Sensitivity](reports/figures/sensitivity_three_tier.png)
 
-<!-- DRAFT: one paragraph, in your words, on what the sensitivity grid means for a fraud team -->
-_DRAFT: the honest message is that the best policy depends on what friction costs the business. Say how much the
-savings move across the grid, and which assumption matters most._
+<!-- DRAFT: rewrite in your own voice -->
+Across all 27 combinations the three-tier policy saves 36-63% against approving everything, so the conclusion
+holds up. The assumption that matters most is not a cost but **review capacity**: going from 0.5% to 2% of daily
+volume adds roughly 15-20 points of savings, more than any change in the friction or margin assumptions. For a
+fraud team, that means the strongest lever is analyst headcount, and it's worth pricing what one more reviewer
+saves.
 
 **Operations view.** The review bar is fit on the calibration window and then applied unchanged, the way a
 real-time system would run. That means daily queue volume varies:
@@ -317,34 +442,89 @@ test sample:
 ![Attribution by feature group](reports/figures/shap_by_group.png)
 
 <!-- BEGIN:explain -->
-_Not generated yet: run `make all` on the Kaggle data, then `make writeup`._
+Share of total |SHAP| by feature group: masked 60%, known_raw 15%, text_norm 6%, history 6%, frequency 5%, velocity 4%, simple 3%. Interpretable features carry 40% of attribution.
+
+| feature | group | mean_abs_shap |
+|---|---|---|
+| C13 | masked | 0.1774 |
+| card6 | known_raw | 0.1476 |
+| TransactionAmt | known_raw | 0.1342 |
+| V70 | masked | 0.1215 |
+| freq_card1 | frequency | 0.1070 |
+| C1 | masked | 0.1055 |
+| D2 | masked | 0.1053 |
+| p_email_provider | text_norm | 0.0914 |
+| card_prior_n | history | 0.0880 |
+| C14 | masked | 0.0880 |
+| card1 | known_raw | 0.0815 |
+| amt_cents | simple | 0.0814 |
+| C11 | masked | 0.0727 |
+| V91 | masked | 0.0699 |
+| D15 | masked | 0.0670 |
 <!-- END:explain -->
 
 Reason codes name only interpretable features; masked vendor columns are folded into one "masked vendor
 signals" line, because a decline can't be explained to a customer or an auditor with "V258 was high". The API
 returns the top three with every score.
 
-<!-- DRAFT: fill from notebooks/02_error_analysis.ipynb -->
-_DRAFT: what the top false positives have in common (new accounts? no identity? one product line?), what the
-missed fraud looks like (small-dollar card testing that the cost policy approves on purpose?), and one surprise._
+<!-- DRAFT: rewrite in your own voice (source: notebooks/02_error_analysis.ipynb) -->
+**Where the model goes wrong** ([`notebooks/02_error_analysis.ipynb`](notebooks/02_error_analysis.ipynb)):
+
+- **False alarms concentrate in product C and identity-present traffic, not on new accounts** (which I expected).
+  Among the top 1% highest-scored legitimate transactions, 47% are `ProductCD = C` (vs 9.5% of all legitimate
+  traffic) and 61% have an identity record (vs 20%). Friction from this model falls on one product line.
+- **Missed fraud is mostly ordinary-looking product W purchases.** 66% of the fraud the policy approved is product W,
+  mostly $50-200. That's not card testing (only 2.6% of missed fraud is under $10); it's fraud that resembles normal
+  spending.
+- **Surprise: cold start isn't the weak spot.** 55% of test transactions come from accounts never seen before, and
+  the model scores *better* on them (PR-AUC 0.557 vs 0.527 overall, at a higher 4.8% fraud rate). One likely reason:
+  the account proxy is approximate, so some "new" accounts are probably existing cards whose `D1` shifted.
 
 ## 10. Does it hold up over time?
 
 **Rolling backtest:** train on every earlier 30-day window, score the next, same parameters:
 
 <!-- BEGIN:backtest -->
-_Not generated yet: run `make all` on the Kaggle data, then `make writeup`._
+| test_window | train_rows | test_rows | fraud_rate | pr_auc | recall_at_1pct | dollar_recall_at_1pct |
+|---|---|---|---|---|---|---|
+| 2 | 223738 | 92189 | 0.0404 | 0.638 | 0.240 | 0.184 |
+| 3 | 315927 | 98615 | 0.0395 | 0.599 | 0.239 | 0.143 |
+| 4 | 414542 | 83571 | 0.0341 | 0.593 | 0.271 | 0.186 |
+| 5 | 498113 | 86934 | 0.0342 | 0.597 | 0.267 | 0.173 |
 <!-- END:backtest -->
 
 ![Backtest](reports/figures/backtest.png)
 
+Performance is stable across windows (PR-AUC 0.59-0.64), and every fold scores **higher than the main test
+number (0.53)**. The difference is recency: backtest folds train right up to the window they score, while the main
+model stops at day 101 and is tested from day 152, because validation and calibration windows sit in between.
+That gap is the price of a clean evaluation; a deployed model should be retrained on all labeled data first.
+
 **Drift (PSI)** of the top features and of the score against the training window:
 
 <!-- BEGIN:drift -->
-_Not generated yet: run `make all` on the Kaggle data, then `make writeup`._
+Last scored window vs training: features with PSI > 0.2: card_prior_n.
+
+| feature | psi |
+|---|---|
+| card_prior_n | 0.359 |
+| D15 | 0.110 |
+| V30 | 0.063 |
+| V91 | 0.059 |
+| V70 | 0.056 |
+| D2 | 0.044 |
+| card1_n_addr_7d | 0.040 |
+| C13 | 0.030 |
+| C1 | 0.015 |
+| model_score | 0.015 |
 <!-- END:drift -->
 
 ![Drift](reports/figures/drift_psi.png)
+
+The model score itself is stable (PSI about 0.015 in every window). The one large shift, `card_prior_n` (count of
+earlier transactions on the card), is **built into the feature**: the history starts on day 1 of the dataset, so
+counts can only grow over time, and later windows look different from training by construction. A production
+version would use a rolling count (e.g. last 90 days) instead of an all-time one.
 
 ## 11. Serving: API and dashboard
 
@@ -380,6 +560,11 @@ model quality, drift, and per-transaction explanations.
   shows how much they move.
 - **Labels lag and miss fraud.** Chargeback labels arrive late and never cover undetected fraud, so "legitimate"
   contains some unlabeled fraud, and the review queue is assumed to resolve cases perfectly.
+- **Reviewers are assumed perfect.** Most of the three-tier saving comes from manual review, which is modeled as
+  a $3 decision that is always right. Real reviewers make mistakes and add delay, so treat that part as an upper bound.
+- **The rules baseline is weak by construction.** Five quick rules, fit on one window, decayed to near-random on
+  test (the velocity rule's precision fell from 14% to 2.5%). A real ops team's rules would be stronger and
+  maintained, so the "vs rules engine" comparison flatters the model.
 - **Thresholds are fit once.** The review bar is set on the calibration window; real traffic would need it
   monitored and refreshed (the queue chart shows days over capacity).
 - **One merchant ecosystem.** It may not transfer to other fraud types (account takeover, synthetic identity,
