@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
@@ -9,7 +10,9 @@ from pathlib import Path
 import yaml
 from pydantic import BaseModel, Field
 
-ROOT = Path(__file__).resolve().parents[2]
+# The repo root holds configs/ and sql/. An editable install finds it from this file;
+# a regular install (the Docker image) lives in site-packages, so it sets FRAUD_ROOT.
+ROOT = Path(os.environ.get("FRAUD_ROOT") or Path(__file__).resolve().parents[2])
 CONFIG_DIR = ROOT / "configs"
 SQL_DIR = ROOT / "sql"
 

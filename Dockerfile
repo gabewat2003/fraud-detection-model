@@ -23,7 +23,7 @@ ARG MODELS_DIR=models
 COPY ${MODELS_DIR}/metadata.json ${MODELS_DIR}/policy.json ${MODELS_DIR}/serving.duckdb models/
 COPY ${MODELS_DIR}/*.txt ${MODELS_DIR}/*.pkl models/
 
-ENV FRAUD_MODELS_DIR=/app/models FRAUD_MLFLOW=0 PYTHONUNBUFFERED=1
+ENV FRAUD_ROOT=/app FRAUD_MODELS_DIR=/app/models FRAUD_MLFLOW=0 PYTHONUNBUFFERED=1
 EXPOSE 8000
 HEALTHCHECK CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
 CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]

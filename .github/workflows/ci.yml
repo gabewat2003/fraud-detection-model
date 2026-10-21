@@ -55,5 +55,5 @@ jobs:
           docker build --build-arg MODELS_DIR=models/sample -t fraud-api .
           docker run -d -p 8000:8000 --name api fraud-api
           for i in $(seq 1 30); do curl -sf localhost:8000/health && break; sleep 2; done
-          curl -sf -X POST localhost:8000/score -H "Content-Type: application/json" -d @api/example_request.json
+          curl -sS --fail-with-body -X POST localhost:8000/score -H "Content-Type: application/json" -d @api/example_request.json || { docker logs api; exit 1; }
           docker logs api
