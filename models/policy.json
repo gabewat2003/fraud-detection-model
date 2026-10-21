@@ -5,10 +5,11 @@
     "friction_cost": 5.0,
     "lost_margin_rate": 0.25,
     "review_cost": 3.0,
-    "review_cap": 0.01
+    "review_cap": 0.01,
+    "reviewer_accuracy": 0.9
   },
   "top_1pct_threshold": 0.6208287477493286,
   "cost_optimal_flat_threshold": 0.10352189032161586,
-  "review_benefit_threshold": 56.86022252216935,
+  "review_benefit_threshold": 35.5625138147222,
   "rules_review_amount_bar": 0.0
 }

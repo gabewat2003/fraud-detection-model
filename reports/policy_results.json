@@ -5,18 +5,19 @@
     "friction_cost": 5.0,
     "lost_margin_rate": 0.25,
     "review_cost": 3.0,
-    "review_cap": 0.01
+    "review_cap": 0.01,
+    "reviewer_accuracy": 0.9
   },
   "thresholds": {
     "top_1pct_threshold": 0.6208287477493286,
     "cost_optimal_flat_threshold": 0.10352189032161586,
-    "review_benefit_threshold": 56.86022252216935,
+    "review_benefit_threshold": 35.5625138147222,
     "rules_review_amount_bar": 0.0
   },
   "policies": [
     {
       "fraud_usd_caught": 0.0,
-      "fraud_usd_missed": 469608.52099999995,
+      "fraud_usd_missed": 469608.52100000007,
       "fraud_dollar_recall": 0.0,
       "fraud_count_recall": 0.0,
       "good_declined": 0,
@@ -24,7 +25,7 @@
       "reviews": 0,
       "review_rate": 0.0,
       "decline_rate": 0.0,
-      "cost_fraud_loss": 515853.52099999995,
+      "cost_fraud_loss": 515853.521,
       "cost_friction": 0.0,
       "cost_review": 0.0,
       "total_cost": 515853.521,
@@ -34,31 +35,31 @@
       "savings_vs_top_1pct": -0.20319071731717564
     },
     {
-      "fraud_usd_caught": 3441.388,
-      "fraud_usd_missed": 466167.13300000003,
-      "fraud_dollar_recall": 0.007328206039941086,
-      "fraud_count_recall": 0.018488485241647746,
-      "good_declined": 0,
-      "good_declined_rate": 0.0,
+      "fraud_usd_caught": 3097.2492,
+      "fraud_usd_missed": 466511.2718,
+      "fraud_dollar_recall": 0.006595385435946978,
+      "fraud_count_recall": 0.01663963671748297,
+      "good_declined": 226,
+      "good_declined_rate": 0.0026468455402465546,
       "reviews": 2320,
       "review_rate": 0.026190718099818246,
       "decline_rate": 0.0,
-      "cost_fraud_loss": 511557.13300000003,
-      "cost_friction": 0.0,
+      "cost_fraud_loss": 511986.7718,
+      "cost_friction": 6339.419724999998,
       "cost_review": 6960.0,
-      "total_cost": 518517.133,
+      "total_cost": 525286.1915249999,
       "policy": "Rules engine (2+ rules decline, 1 rule review)",
-      "savings_vs_approve_all": -0.005163504544539066,
+      "savings_vs_approve_all": -0.01828556003013082,
       "savings_ci": [
-        -0.01627117105122409,
-        0.002774144332753533
+        -0.03979096223937627,
+        -0.004074406291675185
       ],
-      "savings_vs_top_1pct": -0.20940339805399
+      "savings_vs_top_1pct": -0.2251917334063751
     },
     {
-      "fraud_usd_caught": 78901.45500000002,
+      "fraud_usd_caught": 78901.455,
       "fraud_usd_missed": 390707.066,
-      "fraud_dollar_recall": 0.16801538190147114,
+      "fraud_dollar_recall": 0.1680153819014711,
       "fraud_count_recall": 0.29516704508595526,
       "good_declined": 163,
       "good_declined_rate": 0.0019064773444992865,
@@ -66,7 +67,7 @@
       "review_rate": 0.0,
       "decline_rate": 0.01211320712116594,
       "cost_fraud_loss": 423302.066,
-      "cost_friction": 5435.883500000001,
+      "cost_friction": 5435.8835,
       "cost_review": 0.0,
       "total_cost": 428737.9495,
       "policy": "Model: decline top 1%",
@@ -101,7 +102,7 @@
     },
     {
       "fraud_usd_caught": 183162.016,
-      "fraud_usd_missed": 286446.50499999995,
+      "fraud_usd_missed": 286446.505,
       "fraud_dollar_recall": 0.3900312873581781,
       "fraud_count_recall": 0.49270191372040223,
       "good_declined": 1369,
@@ -122,108 +123,131 @@
       "savings_vs_top_1pct": 0.11820935797520282
     },
     {
-      "fraud_usd_caught": 263015.386,
-      "fraud_usd_missed": 206593.135,
-      "fraud_dollar_recall": 0.5600737087136458,
-      "fraud_count_recall": 0.5238404151800194,
-      "good_declined": 1206,
-      "good_declined_rate": 0.0141055931132892,
-      "reviews": 907,
-      "review_rate": 0.010239216084713426,
-      "decline_rate": 0.02987096555694788,
-      "cost_fraud_loss": 228613.135,
-      "cost_friction": 35197.50925,
-      "cost_review": 2721.0,
-      "total_cost": 266531.64425,
+      "fraud_usd_caught": 248273.92600000004,
+      "fraud_usd_missed": 221334.595,
+      "fraud_dollar_recall": 0.5286827536078718,
+      "fraud_count_recall": 0.5206941290950373,
+      "good_declined": 1277,
+      "good_declined_rate": 0.014934852277246252,
+      "reviews": 926,
+      "review_rate": 0.010453709034668834,
+      "decline_rate": 0.02989354376220634,
+      "cost_fraud_loss": 243500.09499999997,
+      "cost_friction": 53283.7422,
+      "cost_review": 2778.0,
+      "total_cost": 299561.83719999995,
       "policy": "Model: three-tier with review cap",
-      "savings_vs_approve_all": 0.4833191334367184,
+      "savings_vs_approve_all": 0.4192889550908,
       "savings_ci": [
-        0.44108122528097865,
-        0.522815109521223
+        0.3768589809203033,
+        0.4604733756578435
       ],
-      "savings_vs_top_1pct": 0.37833437753566523
+      "savings_vs_top_1pct": 0.301293861321693
+    },
+    {
+      "fraud_usd_caught": 239608.92599999998,
+      "fraud_usd_missed": 229999.595,
+      "fraud_dollar_recall": 0.5102312144800286,
+      "fraud_count_recall": 0.5172234836198507,
+      "good_declined": 1294,
+      "good_declined_rate": 0.015139535427729304,
+      "reviews": 798,
+      "review_rate": 0.009008703898127138,
+      "decline_rate": 0.030322529662117157,
+      "cost_fraud_loss": 252325.595,
+      "cost_friction": 56347.96444999999,
+      "cost_review": 2394.0,
+      "total_cost": 311067.55945,
+      "policy": "Model: three-tier, hard daily cap",
+      "savings_vs_approve_all": 0.3969847121582407,
+      "savings_ci": [
+        0.3524644248696377,
+        0.4422765535526685
+      ],
+      "savings_vs_top_1pct": 0.2744576032684506
     }
   ],
   "by_model": [
     {
-      "model": "LightGBM",
-      "total_cost": 261045.563,
-      "savings_vs_approve_all": 0.49395409283248837,
-      "fraud_dollar_recall": 0.5725020820054499,
-      "good_declined_rate": 0.015251818755994292,
-      "review_rate": 0.010814960318804257
+      "model": "LightGBM (Optuna-tuned)",
+      "total_cost": 299561.83719999995,
+      "savings_vs_approve_all": 0.4192889550908,
+      "fraud_dollar_recall": 0.5286827536078718,
+      "good_declined_rate": 0.014934852277246252,
+      "review_rate": 0.010453709034668834
     },
     {
-      "model": "Ablation: raw text strings",
-      "total_cost": 263925.719,
-      "savings_vs_approve_all": 0.4883708102091253,
-      "fraud_dollar_recall": 0.5609260441847903,
-      "good_declined_rate": 0.013158202531053358,
-      "review_rate": 0.010781093010916563
+      "model": "LightGBM",
+      "total_cost": 300385.85624999995,
+      "savings_vs_approve_all": 0.4176915654899641,
+      "fraud_dollar_recall": 0.5229697714535295,
+      "good_declined_rate": 0.016028445109827132,
+      "review_rate": 0.010905273139838115
     },
     {
       "model": "Ablation: no velocity/history/freq",
-      "total_cost": 265877.886,
-      "savings_vs_approve_all": 0.4845864665523917,
-      "fraud_dollar_recall": 0.598109860532109,
-      "good_declined_rate": 0.02095955460946455,
-      "review_rate": 0.011085898781905827
+      "total_cost": 301884.39907499996,
+      "savings_vs_approve_all": 0.414786588080689,
+      "fraud_dollar_recall": 0.5515979913405362,
+      "good_declined_rate": 0.021449624552621116,
+      "review_rate": 0.01105203147401813
     },
     {
-      "model": "LightGBM (Optuna-tuned)",
-      "total_cost": 266531.64425,
-      "savings_vs_approve_all": 0.4833191334367184,
-      "fraud_dollar_recall": 0.5600737087136458,
-      "good_declined_rate": 0.0141055931132892,
-      "review_rate": 0.010239216084713426
+      "model": "Ablation: raw text strings",
+      "total_cost": 304406.806825,
+      "savings_vs_approve_all": 0.4098968128880912,
+      "fraud_dollar_recall": 0.5072450482643607,
+      "good_declined_rate": 0.013765234274485954,
+      "review_rate": 0.010589178266219619
     },
     {
       "model": "LightGBM (scale_pos_weight)",
-      "total_cost": 276422.154,
-      "savings_vs_approve_all": 0.46414603613803773,
-      "fraud_dollar_recall": 0.5265578539193501,
-      "good_declined_rate": 0.011731268567685794,
-      "review_rate": 0.010476287239927298
+      "total_cost": 312105.692075,
+      "savings_vs_approve_all": 0.3949722559420118,
+      "fraud_dollar_recall": 0.47886961361163216,
+      "good_declined_rate": 0.012279819410980376,
+      "review_rate": 0.010453709034668834
     },
     {
       "model": "LightGBM (cost-weighted)",
-      "total_cost": 296101.86024999997,
-      "savings_vs_approve_all": 0.4259962408010781,
-      "fraud_dollar_recall": 0.4732687037422816,
-      "good_declined_rate": 0.012713747690004445,
-      "review_rate": 0.010464998137298067
+      "total_cost": 331156.2625,
+      "savings_vs_approve_all": 0.35804206229310587,
+      "fraud_dollar_recall": 0.41571384434057157,
+      "good_declined_rate": 0.0133219490514398,
+      "review_rate": 0.010566600060961153
     },
     {
       "model": "Ablation: interpretable features only",
-      "total_cost": 356257.385,
-      "savings_vs_approve_all": 0.30938266291294736,
-      "fraud_dollar_recall": 0.4138141799177447,
-      "good_declined_rate": 0.019485835925986572,
-      "review_rate": 0.011481017373928946
+      "total_cost": 388265.03215,
+      "savings_vs_approve_all": 0.24733472518063904,
+      "fraud_dollar_recall": 0.3721530779037973,
+      "good_declined_rate": 0.019603967344265363,
+      "review_rate": 0.012056761608019778
     },
     {
       "model": "Logistic regression",
-      "total_cost": 460534.714,
-      "savings_vs_approve_all": 0.10723743223224025,
-      "fraud_dollar_recall": 0.24274683252606483,
-      "good_declined_rate": 0.023380663875178367,
-      "review_rate": 0.011526173784445875
+      "total_cost": 497120.87387499993,
+      "savings_vs_approve_all": 0.03631388826945714,
+      "fraud_dollar_recall": 0.20709235618831542,
+      "good_declined_rate": 0.02385318954829353,
+      "review_rate": 0.010893984037208882
     },
     {
       "model": "Rules engine",
-      "total_cost": 468577.53099999996,
-      "savings_vs_approve_all": 0.09164615162140188,
-      "fraud_dollar_recall": 0.10559644423487792,
-      "good_declined_rate": 0.0,
+      "total_cost": 518214.1705,
+      "savings_vs_approve_all": -0.004576201196463181,
+      "fraud_dollar_recall": 0.09503679981139014,
+      "good_declined_rate": 0.0010327726964373433,
       "review_rate": 0.010284372495230355
     }
   ],
   "review_queue": {
-    "mean_daily_review_rate": 0.01025007697134506,
-    "max_daily_review_rate": 0.01594301221166893,
-    "days_over_capacity": 17,
+    "mean_daily_review_rate": 0.010447033414923769,
+    "max_daily_review_rate": 0.015264586160108548,
+    "days_over_capacity": 16,
     "days": 31,
-    "reviews_over_capacity": 128
+    "reviews_over_capacity": 128,
+    "hard_cap_days_over_capacity": 0
   },
   "break_even": [
     {
@@ -247,6 +271,7 @@
       "decline if p >": 0.2003968253968254
     }
   ],
+  "perfect_reviewer_savings": 0.4833191334367184,
   "cost_curve_min": {
     "flag_rate": 0.031203079667197254,
     "total_cost": 375058.34274999995

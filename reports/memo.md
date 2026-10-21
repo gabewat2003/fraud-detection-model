@@ -1,9 +1,8 @@
 # Memo: a cost-based approve / review / decline policy for card-not-present fraud
 
-**To:** Fraud operations lead · **From:** <!-- DRAFT: your name --> · **Re:** recommended decision policy
+**To:** Fraud operations lead · **Re:** recommended decision policy
 
-<!-- DRAFT: this memo is written for a non-technical reader. Rewrite it in your voice after `make all`;
-     the table below is regenerated from the pipeline by `make writeup`. -->
+<!-- the table below is regenerated from the pipeline by `make writeup` -->
 
 ## Recommendation
 
@@ -16,17 +15,18 @@ where it saves more than it costs, within the team's daily capacity.
 <!-- BEGIN:memo_numbers -->
 | | Approve all | Rules engine | Recommended policy |
 |---|---|---|---|
-| Total cost (test window) | $515,854 | $518,517 | $266,532 |
-| Fraud $ stopped | $0 | $3,441 | $263,015 |
-| Good customers declined | 0 | 0 | 1,206 (1.41%) |
-| Manual reviews | 0 | 2,320 | 907 |
+| Total cost (test window) | $515,854 | $525,286 | $299,562 |
+| Fraud $ stopped | $0 | $3,097 | $248,274 |
+| Good customers declined | 0 | 226 | 1,277 (1.49%) |
+| Manual reviews | 0 | 2,320 | 926 |
 | Top-1%-decline rule, for reference | | | $428,738 |
 <!-- END:memo_numbers -->
 
 ## Why it works
 
-- **Reviews go where they pay off.** Most of the saving comes from sending about 1% of traffic, the uncertain,
-  high-value cases, to an analyst instead of guessing. Automatic declines alone save about half as much.
+- **Reviews go where they pay off.** About 1% of traffic, the uncertain, high-value cases, goes to an analyst
+  instead of being guessed. Automatic approve/decline alone cuts cost by about 27%; the review tier takes it to
+  about 42%, assuming analysts get 90% of cases right.
 - **Declines are priced, not quota-based.** A transaction is declined only when its expected fraud loss is larger
   than what a wrong decline costs: the support contact plus the margin on the lost sale.
 - **Every threshold was set on earlier data** and then tested, unchanged, on later data the model never saw.
@@ -36,8 +36,12 @@ where it saves more than it costs, within the team's daily capacity.
 - **The cost of a wrongly declined customer.** We assumed $5 (support contact, churn risk) plus 25% of the order
   (lost margin). An earlier version without the margin term declined 15% of good customers, so this assumption
   matters a lot; Finance and CX should agree on it. See the sensitivity chart.
-- **Review capacity.** Sized at 1% of daily volume. On some days the queue exceeds that; staffing or an
-  overflow rule (auto-approve below a small amount) is needed.
+- **Analyst accuracy.** The review tier is only as good as the analysts. At 80% accuracy the saving falls to
+  about 36%; if they were always right it would be about 48%. Measuring reviewer accuracy during the pilot is
+  the cheapest way to firm up this number.
+- **Review capacity.** Sized at 1% of daily volume. The figures above let the queue run over, which happens on about
+  half the days. Run live, the policy should add a hard daily cap: once the day's slots are full, remaining cases
+  are approved or declined automatically. On the test window that costs about 2 points of saving.
 - **Calibrated scores.** The policy multiplies probabilities by dollars, so the model's probabilities are checked
   against observed fraud rates and should be re-checked monthly.
 

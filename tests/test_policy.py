@@ -104,6 +104,46 @@ def test_policy_report_outputs(trained_paths):
     assert (trained_paths.models / "policy.json").exists()
 
 
+def test_reviewer_mistakes_by_hand():
+    c = C.model_copy(update={"reviewer_accuracy": 0.9})
+    # p=0.2, $50: approve 0.2*65 = 13, decline 0.8*5 = 4
+    # review = 3 + 0.1 * (13 + 4) = 4.7, now worse than declining
+    e_a, e_d, e_r = P.expected_costs([0.2], [50.0], c)
+    np.testing.assert_allclose([e_a[0], e_d[0], e_r[0]], [13, 4, 4.7])
+    assert P.three_tier(np.array([0.2]), np.array([50.0]), c.model_copy(update={"review_cap": 1.0}), 0.0
+                        ).tolist() == [P.DECLINE]  # fmt: skip
+    # realized: reviewed fraud ($100) -> 3 + 0.1*115; reviewed good -> 3 + 0.1*5
+    dec, y, amt = np.array([P.REVIEW, P.REVIEW]), np.array([1, 0]), np.array([100.0, 100.0])
+    np.testing.assert_allclose(P.realized_cost(dec, y, amt, c), [14.5, 3.5])
+    s = P.summarize(dec, y, amt, c)
+    assert s["fraud_usd_caught"] == pytest.approx(90)
+    assert s["fraud_usd_missed"] == pytest.approx(10)
+    assert s["good_declined_rate"] == pytest.approx(0.1)
+    assert s["total_cost"] == pytest.approx(
+        s["cost_fraud_loss"] + s["cost_friction"] + s["cost_review"]
+    )
+
+
+def test_perfect_reviewers_match_flat_review_cost():
+    rng = np.random.default_rng(4)
+    p, amt = rng.random(500), rng.lognormal(4, 1, 500)
+    _, _, e_r = P.expected_costs(p, amt, C.model_copy(update={"reviewer_accuracy": 1.0}))
+    np.testing.assert_allclose(e_r, C.review_cost)
+
+
+def test_hard_daily_cap_is_first_come_first_served():
+    c = C.model_copy(update={"review_cap": 0.5})  # 2 slots on a 4-transaction day
+    dec = np.array([P.REVIEW, P.REVIEW, P.REVIEW, P.APPROVE, P.REVIEW, P.APPROVE])
+    day = np.array([1, 1, 1, 1, 2, 2])
+    order = np.array([30, 10, 20, 40, 50, 60])  # arrival times: rows 1, 2, 0 on day 1
+    p = np.array([0.9, 0.5, 0.5, 0.0, 0.5, 0.0])
+    amt = np.full(6, 100.0)
+    out = P.enforce_daily_cap(dec, p, amt, day, order, c)
+    # row 0 arrived third on day 1 -> overflow -> auto-decided (p=0.9 -> decline)
+    assert out.tolist() == [P.DECLINE, P.REVIEW, P.REVIEW, P.APPROVE, P.REVIEW, P.APPROVE]
+    assert (P.review_queue(out, day, c.review_cap).over_capacity == 0).all()
+
+
 def test_lost_margin_makes_declining_big_orders_expensive():
     cm = C.model_copy(update={"lost_margin_rate": 0.25})
     # $400 order: declining a good customer costs 5 + 0.25*400 = 105, approving fraud 415

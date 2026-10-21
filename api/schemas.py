@@ -40,6 +40,7 @@ class CostOverride(BaseModel):
     friction_cost: float | None = None
     lost_margin_rate: float | None = None
     review_cost: float | None = None
+    reviewer_accuracy: float | None = Field(None, ge=0.0, le=1.0)
 
 
 class ScoreRequest(BaseModel):

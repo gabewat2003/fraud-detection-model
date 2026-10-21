@@ -114,6 +114,8 @@ def evaluate(paths: Paths, n_boot: int = 300) -> dict:
 
 # -------------------------------------------------------------------------- policy
 
+HARD_CAP = "Model: three-tier, hard daily cap"
+
 
 def _decisions(
     test: pd.DataFrame, calib: pd.DataFrame, champion: str, c: Costs
@@ -141,6 +143,10 @@ def _decisions(
         "Model: amount-aware decline": policy.amount_aware(pt, amt_t, c),
         "Model: three-tier with review cap": policy.three_tier(pt, amt_t, c, th["review_benefit_threshold"]),
     }  # fmt: skip
+    dec[HARD_CAP] = policy.enforce_daily_cap(
+        dec["Model: three-tier with review cap"], pt, amt_t, test.tx_day.to_numpy(),
+        test.TransactionDT.to_numpy(), c,
+    )  # fmt: skip
     return dec, th
 
 
@@ -203,6 +209,18 @@ def policy_report(paths: Paths) -> dict:
     charts.save(
         charts.sensitivity_heatmap(grid, "amount-aware"), paths.figures, "sensitivity_amount_aware"
     )
+    review_grid = review_sensitivity(test, calib, champion)
+    charts.save(charts.review_sensitivity_heatmap(review_grid), paths.figures, "sensitivity_review")
+
+    # the same policy if reviewers never made mistakes: the optimistic bound
+    perfect = c.model_copy(update={"reviewer_accuracy": 1.0})
+    rt_perfect = policy.fit_review_threshold(
+        calib[f"pc_{champion}"].to_numpy(), calib.TransactionAmt.to_numpy(), perfect
+    )
+    s_perfect = policy.summarize(
+        policy.three_tier(test[f"pc_{champion}"].to_numpy(), amt, perfect, rt_perfect), y, amt, perfect
+    )  # fmt: skip
+    perfect_saving = 1 - s_perfect["total_cost"] / base_cost
 
     q = policy.review_queue(dec["Model: three-tier with review cap"], day, c.review_cap)
     charts.save(charts.review_queue(q), paths.figures, "review_queue")
@@ -212,6 +230,9 @@ def policy_report(paths: Paths) -> dict:
         "days_over_capacity": int((q.over_capacity > 0).sum()),
         "days": int(len(q)),
         "reviews_over_capacity": int(q.over_capacity.sum()),
+        "hard_cap_days_over_capacity": int(
+            (policy.review_queue(dec[HARD_CAP], day, c.review_cap).over_capacity > 0).sum()
+        ),
     }
 
     break_even = pd.DataFrame({"amount": [5, 25, 100, 500, 2000]})
@@ -221,13 +242,15 @@ def policy_report(paths: Paths) -> dict:
         "champion": champion, "costs": c.model_dump(exclude={"sensitivity"}), "thresholds": th,
         "policies": table.to_dict(orient="records"), "by_model": by_model.to_dict(orient="records"),
         "review_queue": queue_stats, "break_even": break_even.to_dict(orient="records"),
+        "perfect_reviewer_savings": perfect_saving,
         "cost_curve_min": {"flag_rate": float(curve.loc[curve.total_cost.idxmin(), "flag_rate"]),
                            "total_cost": float(curve.total_cost.min())},
     }  # fmt: skip
     save_json(out, paths.reports / "policy_results.json")
     save_json({"champion": champion, "costs": out["costs"], **th}, paths.models / "policy.json")
     grid.to_csv(paths.reports / "sensitivity.csv", index=False)
-    _write_policy_md(paths, table, by_model, break_even, queue_stats, th, c)
+    review_grid.to_csv(paths.reports / "sensitivity_review.csv", index=False)
+    _write_policy_md(paths, table, by_model, break_even, queue_stats, th, c, perfect_saving)
     _write_policy_html(paths, out)
     return out
 
@@ -256,7 +279,36 @@ def sensitivity(test: pd.DataFrame, calib: pd.DataFrame, champion: str) -> pd.Da
     return pd.DataFrame(rows)
 
 
-def _write_policy_md(paths, table, by_model, break_even, queue, th, c) -> None:
+def review_sensitivity(test: pd.DataFrame, calib: pd.DataFrame, champion: str) -> pd.DataFrame:
+    """Three-tier savings across reviewer accuracy x review cost x capacity.
+
+    Decline costs stay at the base assumptions. The no-review policy (amount-aware decline)
+    doesn't depend on any of these, so its saving is the floor the review tier adds to.
+    """
+    base = costs()
+    s = base.sensitivity
+    y, amt = test.isFraud.to_numpy(), test.TransactionAmt.to_numpy()
+    pt, pc = test[f"pc_{champion}"].to_numpy(), calib[f"pc_{champion}"].to_numpy()
+    approve = policy.summarize(policy.approve_all(len(y)), y, amt, base)["total_cost"]
+    no_review = policy.summarize(policy.amount_aware(pt, amt, base), y, amt, base)["total_cost"]
+    rows = []
+    for q in s.reviewer_accuracy:
+        for rc in s.review_cost:
+            for cap in s.review_cap:
+                c = base.model_copy(
+                    update={"reviewer_accuracy": q, "review_cost": rc, "review_cap": cap}
+                )
+                rt = policy.fit_review_threshold(pc, calib.TransactionAmt.to_numpy(), c)
+                sm = policy.summarize(policy.three_tier(pt, amt, c, rt), y, amt, c)
+                rows.append({"reviewer_accuracy": q, "review_cost": rc, "review_cap": cap,
+                             "total_cost": sm["total_cost"], "savings": 1 - sm["total_cost"] / approve,
+                             "no_review_savings": 1 - no_review / approve, "review_rate": sm["review_rate"],
+                             "good_declined_rate": sm["good_declined_rate"],
+                             "fraud_dollar_recall": sm["fraud_dollar_recall"]})  # fmt: skip
+    return pd.DataFrame(rows)
+
+
+def _write_policy_md(paths, table, by_model, break_even, queue, th, c, perfect_saving) -> None:
     t = table.copy()
     t["savings 95% CI"] = t.get("savings_ci").map(
         lambda v: f"{v[0]:.1%} to {v[1]:.1%}" if isinstance(v, (list, tuple)) else ""
@@ -272,7 +324,9 @@ def _write_policy_md(paths, table, by_model, break_even, queue, th, c) -> None:
     t["Fraud $ stopped"] = t["Fraud $ stopped"].astype(float)
     parts = [
         f"Costs: chargeback fee ${c.chargeback_fee:g}, friction ${c.friction_cost:g} + {c.lost_margin_rate:.0%} of the amount per false decline, review ${c.review_cost:g}, "
-        f"review capacity {c.review_cap:.1%} of daily volume.\n",
+        f"reviewers right {c.reviewer_accuracy:.0%} of the time, review capacity {c.review_cap:.1%} of daily volume. "
+        f"Reviewed cases count their expected reviewer mistakes (approved fraud, declined good customers), so "
+        f"fraud $ and declined-customer counts on rows with reviews are expected values.\n",
         md_table(t, fmt),
         "\n\n**Three-tier policy driven by each model**\n",
         md_table(by_model.rename(columns={"model": "Model", "total_cost": "Total cost",
@@ -285,7 +339,10 @@ def _write_policy_md(paths, table, by_model, break_even, queue, th, c) -> None:
         md_table(break_even, {"decline if p >": ".3f", "amount": "$,.0f"}),
         f"\n\n**Review queue (three-tier, test window):** mean {queue['mean_daily_review_rate']:.2%} of daily volume, "
         f"max {queue['max_daily_review_rate']:.2%}; {queue['days_over_capacity']} of {queue['days']} days above capacity "
-        f"({queue['reviews_over_capacity']:,} overflow cases).\n",
+        f"({queue['reviews_over_capacity']:,} overflow cases). With the hard daily cap (first come, first served; "
+        f"overflow auto-decided) days over capacity: {queue['hard_cap_days_over_capacity']}.\n",
+        f"\n**Perfect-reviewer bound:** with reviewers always right the three-tier saving would be "
+        f"{perfect_saving:.1%} (vs approve-all), against the {c.reviewer_accuracy:.0%}-accuracy result above.\n",
         f"\nThresholds fit on calib: {json.dumps({k: round(v, 5) for k, v in th.items()})}\n",
     ]  # fmt: skip
     (paths.reports / "policy.md").write_text("".join(parts), encoding="utf-8")
@@ -293,7 +350,13 @@ def _write_policy_md(paths, table, by_model, break_even, queue, th, c) -> None:
 
 def _write_policy_html(paths: Paths, out: dict) -> None:
     md = (paths.reports / "policy.md").read_text(encoding="utf-8")
-    figs = ["policy_costs", "cost_curve", "sensitivity_three_tier", "review_queue"]
+    figs = [
+        "policy_costs",
+        "cost_curve",
+        "sensitivity_three_tier",
+        "sensitivity_review",
+        "review_queue",
+    ]
     body = "".join(
         f'<img src="figures/{f}.png" alt="{f}" style="max-width:100%;margin:16px 0">' for f in figs
     )

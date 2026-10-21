@@ -198,6 +198,32 @@ def sensitivity_heatmap(grid: pd.DataFrame, policy: str) -> alt.Chart:
                         subtitle="Thresholds refit on calib for every cell; savings measured on test"))  # fmt: skip
 
 
+def review_sensitivity_heatmap(grid: pd.DataFrame) -> alt.Chart:
+    """grid: reviewer_accuracy, review_cost, review_cap, savings, no_review_savings."""
+    d = grid.copy()
+    d["cap"] = (d.review_cap * 100).map(lambda v: f"review cap {v:g}%")
+    d["accuracy"] = d.reviewer_accuracy.map(lambda v: f"{v:.0%}")
+    floor = float(d.no_review_savings.iloc[0])
+    acc_order = [f"{v:.0%}" for v in sorted(d.reviewer_accuracy.unique(), reverse=True)]
+    base = alt.Chart().encode(
+        x=alt.X("review_cost:O", title="Cost per manual review ($)", axis=alt.Axis(labelAngle=0)),
+        y=alt.Y("accuracy:O", title="Reviewer accuracy", sort=acc_order),
+    )
+    rect = base.mark_rect(stroke=SURFACE, strokeWidth=2, cornerRadius=4).encode(
+        color=alt.Color("savings:Q", scale=alt.Scale(range=SEQ_BLUE[1:]), title="Saving vs approve-all",
+                        legend=alt.Legend(format=".0%")),
+        tooltip=["review_cost:O", "accuracy:N", "cap:N", alt.Tooltip("savings:Q", format=".1%"),
+                 alt.Tooltip("review_rate:Q", format=".2%", title="review rate")],
+    )  # fmt: skip
+    text = base.mark_text(fontSize=12, fontWeight=500).encode(
+        text=alt.Text("savings:Q", format=".0%"),
+        color=alt.condition("datum.savings > 0.4", alt.value("#ffffff"), alt.value(INK)),
+    )
+    return alt.layer(rect, text, data=d).properties(width=170, height=150).facet(column=alt.Column("cap:N", title=None)).properties(
+        title=alt.Title("Sensitivity of the three-tier policy to manual-review assumptions",
+                        subtitle=f"Decline costs at base values; without a review tier the best policy saves {floor:.0%}"))  # fmt: skip
+
+
 def review_queue(q: pd.DataFrame) -> alt.Chart:
     long = q.melt(
         id_vars="day", value_vars=["reviews", "capacity"], var_name="series", value_name="count"

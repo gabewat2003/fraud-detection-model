@@ -98,6 +98,8 @@ Last scored window vs training: features with PSI > 0.2: card_prior_n.
 - Masked features limit the ability to explain individual decisions.
 - Card / account identity is approximated from masked fields.
 - Costs are assumptions; the recommended thresholds change with them.
+- Manual reviewers are assumed 90% accurate with mistakes independent of the case; about a third of the
+  headline saving depends on the review tier (see the review sensitivity grid in the README).
 - Labels are delayed and incomplete (undetected fraud is labeled legitimate).
 - Single merchant ecosystem; no claim of transfer to other fraud types.
 

@@ -64,6 +64,10 @@ with st.sidebar:
         / 100
     )
     review_cost = st.slider("Cost per manual review ($)", 0.5, 20.0, base.review_cost, 0.5)
+    accuracy = (
+        st.slider("Reviewer accuracy (% of reviewed cases decided right)", 50, 100,
+                  int(round(base.reviewer_accuracy * 100)), 5) / 100
+    )  # fmt: skip
     cap = (
         st.slider("Review capacity (% of daily volume)", 0.0, 5.0, base.review_cap * 100, 0.25)
         / 100
@@ -73,7 +77,7 @@ with st.sidebar:
                          format_func=lambda m: MODEL_LABELS.get(m, m))  # fmt: skip
 
 c = base.model_copy(update={"chargeback_fee": fee, "friction_cost": friction, "lost_margin_rate": margin, "review_cost": review_cost,
-                            "review_cap": cap})  # fmt: skip
+                            "reviewer_accuracy": accuracy, "review_cap": cap})  # fmt: skip
 pc, pt = calib[f"pc_{model}"].to_numpy(), test[f"pc_{model}"].to_numpy()
 raw_c, raw_t = (
     calib[f"p_{model}"].to_numpy(),
@@ -89,6 +93,9 @@ decisions = {
     "Amount-aware decline": policy.amount_aware(pt, amt, c),
     "Three-tier with review cap": policy.three_tier(pt, amt, c, rt),
 }
+decisions["Three-tier, hard daily cap"] = policy.enforce_daily_cap(
+    decisions["Three-tier with review cap"], pt, amt, day, test.TransactionDT.to_numpy(), c
+)
 rows = []
 for name, d in decisions.items():
     s = policy.summarize(d, y, amt, c)

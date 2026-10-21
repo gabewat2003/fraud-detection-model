@@ -54,12 +54,31 @@ def blocks(paths: Paths) -> dict[str, str]:
         three = by["Model: three-tier with review cap"]
         rules = by["Rules engine (2+ rules decline, 1 rule review)"]
         top1 = by["Model: decline top 1%"]
+        no_review = by["Model: amount-aware decline"]
         lo, hi = three["savings_ci"]
         ci = met["pr_auc_ci"].get(champ, [float("nan")] * 2)
+        cst = pol["costs"]
+        review_line = (
+            f"- **Where the saving comes from:** automatic approve/decline alone saves "
+            f"{_pct(no_review['savings_vs_approve_all'])}; the manual-review tier adds the other "
+            f"{(three['savings_vs_approve_all'] - no_review['savings_vs_approve_all']) * 100:.1f} points."
+        )
+        grid = r / "sensitivity_review.csv"
+        if grid.exists():
+            g = pd.read_csv(grid)
+            g = g[g.review_cap == cst["review_cap"]]
+            review_line += (
+                f" That part rests on reviewer assumptions: {_pct(pol['perfect_reviewer_savings'])} if reviewers "
+                f"were always right, {_pct(g.savings.min())} to {_pct(g.savings.max())} across reviewer accuracy "
+                f"{_pct(g.reviewer_accuracy.min(), 0)}-{_pct(g.reviewer_accuracy.max(), 0)} and "
+                f"${g.review_cost.min():g}-${g.review_cost.max():g} per review."
+            )
         out["headline"] = "\n".join([
             f"- **{_pct(three['savings_vs_approve_all'])} lower fraud + friction cost** than approving everything on the "
-            f"held-out test window (95% CI {_pct(lo)} to {_pct(hi)}, day-block bootstrap), and "
+            f"held-out test window (95% CI {_pct(lo)} to {_pct(hi)}, day-block bootstrap), assuming analysts get "
+            f"{_pct(cst['reviewer_accuracy'], 0)} of reviewed cases right at ${cst['review_cost']:g} per review; "
             f"{_pct(1 - three['total_cost'] / rules['total_cost'])} lower than a hand-written rules engine.",
+            review_line,
             f"- Stops **{_pct(three['fraud_dollar_recall'])} of fraud dollars** while declining "
             f"**{_pct(three['good_declined_rate'], 2)} of legitimate customers** and sending "
             f"{_pct(three['review_rate'], 2)} of traffic to manual review (cap {_pct(pol['costs']['review_cap'])}).",
@@ -69,6 +88,20 @@ def blocks(paths: Paths) -> dict[str, str]:
             f"against a {t['base_rate']:.3f} base rate.",
         ])  # fmt: skip
         out["policy"] = _read(r / "policy.md") or MISSING
+        if grid.exists():
+            g = pd.read_csv(grid)
+            g = g[g.review_cap == cst["review_cap"]]
+            wide = g.pivot(
+                index="reviewer_accuracy", columns="review_cost", values="savings"
+            ).sort_index(ascending=False)
+            wide.index = [f"{v:.0%} accurate" for v in wide.index]
+            wide.columns = [f"${v:g} / review" for v in wide.columns]
+            wide = wide.reset_index().rename(columns={"index": "reviewers"})
+            out["review_sensitivity"] = (
+                f"Three-tier saving vs approve-all at {_pct(cst['review_cap'])} review capacity "
+                f"(no-review policy: {_pct(no_review['savings_vs_approve_all'])}):\n\n"
+                + md_table(wide, {c: ".1%" for c in wide.columns if c != "reviewers"})
+            )  # fmt: skip
 
         rows = []
         for k in ("lgbm", "abl_raw_text", "abl_no_behavior", "abl_interpretable"):

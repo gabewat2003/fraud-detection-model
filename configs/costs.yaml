@@ -3,10 +3,15 @@
 chargeback_fee: 15.0      # added to the transaction amount when fraud is approved
 friction_cost: 5.0        # fixed cost of wrongly declining a legitimate customer (support contact, churn risk)
 lost_margin_rate: 0.25    # share of the order amount lost when a legitimate order is declined (gross margin)
-review_cost: 3.0          # cost of one manual review (reviewer resolves correctly)
+review_cost: 3.0          # cost of one manual review (analyst time)
+reviewer_accuracy: 0.9    # share of reviewed cases the analyst gets right; the rest are approved fraud / declined good customers
 review_cap: 0.01          # manual review capacity as a share of each day's volume
 
 sensitivity:
+  # grid 1: decline-cost assumptions x capacity (reviewer settings held at the values above)
   friction_cost: [2.0, 5.0, 10.0]
   lost_margin_rate: [0.10, 0.25, 0.50]
   review_cap: [0.005, 0.01, 0.02]
+  # grid 2: manual-review assumptions x capacity (decline costs held at the values above)
+  reviewer_accuracy: [0.8, 0.9, 1.0]
+  review_cost: [3.0, 8.0, 15.0]

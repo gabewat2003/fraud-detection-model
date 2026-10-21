@@ -3,13 +3,15 @@
 Cost model (assumptions in configs/costs.yaml, varied in the sensitivity grid):
     approve a fraud   -> lose amount + chargeback fee
     decline a good    -> friction (support contact, churn risk) + the margin on the lost sale
-    review anything   -> reviewer cost; the reviewer is assumed to resolve it correctly
+    review anything   -> reviewer cost, plus the cost of the reviewer's mistakes: with
+                         accuracy q, a reviewed fraud is approved with probability 1 - q
+                         and a reviewed good customer is declined with probability 1 - q
     approve a good / decline a fraud -> 0
 
 For one transaction with fraud probability p and amount a, with lost margin rate m:
     E[cost | approve] = p * (a + fee)
     E[cost | decline] = (1 - p) * (friction + m * a)
-    E[cost | review]  = review_cost
+    E[cost | review]  = review_cost + (1 - q) * (E[cost | approve] + E[cost | decline])
 Declining beats approving when p > (friction + m*a) / (friction + m*a + a + fee). Both
 sides grow with the amount, so the break-even probability falls from roughly
 friction / (friction + fee) on tiny orders toward m / (1 + m) on large ones.
@@ -39,7 +41,7 @@ def expected_costs(p, amt, c: Costs) -> tuple[np.ndarray, np.ndarray, np.ndarray
     p, amt = np.asarray(p, dtype=float), np.asarray(amt, dtype=float)
     e_approve = p * (amt + c.chargeback_fee)
     e_decline = (1 - p) * decline_cost(amt, c)
-    e_review = np.full_like(p, c.review_cost)
+    e_review = c.review_cost + (1 - c.reviewer_accuracy) * (e_approve + e_decline)
     return e_approve, e_decline, e_review
 
 
@@ -54,37 +56,52 @@ def break_even_probability(amt, c: Costs) -> np.ndarray:
     return d / (d + amt + c.chargeback_fee)
 
 
-def realized_cost(dec, y, amt, c: Costs) -> np.ndarray:
-    """What each decision actually cost, given the true label."""
+def _outcomes(dec, y, amt, c: Costs) -> dict[str, np.ndarray]:
+    """Per-row outcome weights, averaged over reviewer mistakes.
+
+    `missed` / `wrong_decline` are 0 or 1 for automatic decisions and 1 - q for reviewed
+    rows (q = reviewer accuracy), so totals are expected values, not one random draw.
+    """
     dec, y, amt = np.asarray(dec), np.asarray(y), np.asarray(amt, dtype=float)
-    cost = np.zeros(len(dec))
-    cost[(dec == APPROVE) & (y == 1)] = amt[(dec == APPROVE) & (y == 1)] + c.chargeback_fee
-    good_declined = (dec == DECLINE) & (y == 0)
-    cost[good_declined] = decline_cost(amt[good_declined], c)
-    cost[dec == REVIEW] = c.review_cost
-    return cost
+    fraud, review = y == 1, dec == REVIEW
+    err = 1 - c.reviewer_accuracy
+    missed = np.where(fraud, np.where(review, err, (dec == APPROVE).astype(float)), 0.0)
+    wrong_decline = np.where(~fraud, np.where(review, err, (dec == DECLINE).astype(float)), 0.0)
+    return {
+        "missed": missed,
+        "wrong_decline": wrong_decline,
+        "fraud_loss": missed * (amt + c.chargeback_fee),
+        "friction": wrong_decline * decline_cost(amt, c),
+        "review": np.where(review, c.review_cost, 0.0),
+    }
+
+
+def realized_cost(dec, y, amt, c: Costs) -> np.ndarray:
+    """What each decision cost given the true label (expected over reviewer mistakes)."""
+    o = _outcomes(dec, y, amt, c)
+    return o["fraud_loss"] + o["friction"] + o["review"]
 
 
 def summarize(dec, y, amt, c: Costs) -> dict:
     dec, y, amt = np.asarray(dec), np.asarray(y), np.asarray(amt, dtype=float)
     fraud = y == 1
-    stopped = fraud & (dec != APPROVE)
-    good_declined = (~fraud) & (dec == DECLINE)
-    cost = realized_cost(dec, y, amt, c)
+    o = _outcomes(dec, y, amt, c)
+    caught = fraud * (1 - o["missed"])
+    good_declined = float(o["wrong_decline"].sum())
     return {
-        "fraud_usd_caught": float(amt[stopped].sum()),
-        "fraud_usd_missed": float(amt[fraud & (dec == APPROVE)].sum()),
-        "fraud_dollar_recall": float(amt[stopped].sum() / max(amt[fraud].sum(), 1e-9)),
-        "fraud_count_recall": float(stopped.sum() / max(fraud.sum(), 1)),
-        "good_declined": int(good_declined.sum()),
-        "good_declined_rate": float(good_declined.sum() / max((~fraud).sum(), 1)),
+        "fraud_usd_caught": float((amt * caught).sum()),
+        "fraud_usd_missed": float((amt * o["missed"]).sum()),
+        "fraud_dollar_recall": float((amt * caught).sum() / max(amt[fraud].sum(), 1e-9)),
+        "fraud_count_recall": float(caught.sum() / max(fraud.sum(), 1)),
+        "good_declined": int(round(good_declined)),
+        "good_declined_rate": float(good_declined / max((~fraud).sum(), 1)),
         "reviews": int((dec == REVIEW).sum()),
         "review_rate": float((dec == REVIEW).mean()),
         "decline_rate": float((dec == DECLINE).mean()),
-        "cost_fraud_loss": float(cost[fraud & (dec == APPROVE)].sum()),
-        "cost_friction": float(cost[good_declined].sum()),
-        "cost_review": float(cost[dec == REVIEW].sum()),
-        "total_cost": float(cost.sum()),
+        "cost_fraud_loss": float(o["fraud_loss"].sum()),
+        "cost_friction": float(o["friction"].sum()),
+        "cost_review": float(o["review"].sum()),
+        "total_cost": float((o["fraud_loss"] + o["friction"] + o["review"]).sum()),
     }
 
 
@@ -207,3 +224,22 @@ def review_queue(dec, day, cap: float) -> pd.DataFrame:
     g["capacity"] = np.floor(cap * g.volume)
     g["over_capacity"] = np.maximum(g.reviews - g.capacity, 0)
     return g.reset_index()
+
+
+def enforce_daily_cap(dec, p, amt, day, order, c: Costs) -> np.ndarray:
+    """Hard daily capacity: once a day's review slots are used, overflow is auto-decided.
+
+    Cases are taken first come, first served in `order` (arrival time), which a real-time
+    system can do without seeing the rest of the day. A review that doesn't fit falls back
+    to the cheaper automatic action (approve or decline by expected cost).
+    """
+    dec = np.asarray(dec).copy()
+    idx = np.argsort(np.asarray(order), kind="stable")
+    e_a, e_d, _ = expected_costs(p, amt, c)
+    auto = np.where(e_a > e_d, DECLINE, APPROVE)
+    d = pd.DataFrame({"day": np.asarray(day)[idx], "review": dec[idx] == REVIEW})
+    volume = d.groupby("day")["day"].transform("size").to_numpy()
+    used = d.groupby("day")["review"].cumsum().to_numpy()
+    over = d.review.to_numpy() & (used > np.floor(c.review_cap * volume))
+    dec[idx[over]] = auto[idx[over]]
+    return dec

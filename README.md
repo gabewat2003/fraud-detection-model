@@ -7,7 +7,6 @@
 
 **Stack:** Python · SQL (DuckDB) · pandas · LightGBM · scikit-learn · Optuna · MLflow · Altair · FastAPI · Streamlit · Docker · pytest · GitHub Actions
 
-<!-- DRAFT: rewrite the paragraph below in your own voice -->
 I built this as a portfolio project to practice the part of fraud work that most course projects skip: what
 to actually *do* with a fraud score. A model that ranks transactions well is only half the job. The other half
 is deciding where the cutoffs go, given what a missed fraud and a wrongly declined customer each cost, and how
@@ -16,9 +15,10 @@ many cases a review team can handle in a day.
 ## Results at a glance
 
 <!-- BEGIN:headline -->
-- **48.3% lower fraud + friction cost** than approving everything on the held-out test window (95% CI 44.1% to 52.3%, day-block bootstrap), and 48.6% lower than a hand-written rules engine.
-- Stops **56.0% of fraud dollars** while declining **1.41% of legitimate customers** and sending 1.02% of traffic to manual review (cap 1.0%).
-- 37.8% cheaper than the common 'decline the top 1% of scores' rule: declines follow expected cost, and the most uncertain high-value cases go to manual review.
+- **41.9% lower fraud + friction cost** than approving everything on the held-out test window (95% CI 37.7% to 46.0%, day-block bootstrap), assuming analysts get 90% of reviewed cases right at $3 per review; 43.0% lower than a hand-written rules engine.
+- **Where the saving comes from:** automatic approve/decline alone saves 26.7%; the manual-review tier adds the other 15.2 points. That part rests on reviewer assumptions: 48.3% if reviewers were always right, 33.8% to 48.3% across reviewer accuracy 80%-100% and $3-$15 per review.
+- Stops **52.9% of fraud dollars** while declining **1.49% of legitimate customers** and sending 1.05% of traffic to manual review (cap 1.0%).
+- 30.1% cheaper than the common 'decline the top 1% of scores' rule: declines follow expected cost, and the most uncertain high-value cases go to manual review.
 - Model: LightGBM (Optuna-tuned), test PR-AUC **0.527** (95% CI 0.481-0.567) against a 0.035 base rate.
 <!-- END:headline -->
 
@@ -61,7 +61,6 @@ A fraud team balances two failures:
 | **False alarm** (decline or challenge a good customer) | lost margin, a support contact, a customer less likely to come back |
 | **Manual review** | analyst time, whether or not the case turns out to be fraud |
 
-<!-- DRAFT: rewrite in your own words -->
 **Why accuracy is useless here.** About 96.5% of transactions are legitimate, so a "model" that approves
 everything is 96.5% accurate and catches nothing. Accuracy also treats every error as equally bad, and they
 are not: missing a $2,000 fraud costs about 400 times more than missing a $5 one, while wrongly declining a
@@ -192,7 +191,6 @@ how often the card was used in the previous hour:
 | $200+ | 3+ prior in 1h | 3530 | 0.0649 |
 <!-- END:sql_card_testing -->
 
-<!-- DRAFT: rewrite in your own voice (source: notebooks/01_eda.ipynb) -->
 What stood out in the exploration ([`notebooks/01_eda.ipynb`](notebooks/01_eda.ipynb)):
 
 - **Missing data is a signal, not just a nuisance.** Transactions with an identity record are fraud 7.8% of the
@@ -201,7 +199,7 @@ What stood out in the exploration ([`notebooks/01_eda.ipynb`](notebooks/01_eda.i
 - **One product line carries a disproportionate share.** `ProductCD = C` is 12% of transactions but has a 11.7%
   fraud rate (3.3x the average); mobile devices run at 10%.
 - **Cents tell a story.** Retail-style prices ending in .95-.99 are fraud only 0.9% of the time, whole-dollar
-  amounts 3.6%, and "odd" cents (.01-.95) 6.6-9.9%, plausibly currency-converted orders.
+  amounts 3.6%, and "odd" cents (.01-.95) 6.8-10.2%, plausibly currency-converted orders.
 - **Card testing is visible but small.** Under $10 the fraud rate is 8-9% whatever the velocity; above $10, a card
   used 3+ times in the previous hour has a 1.6-2.6x higher fraud rate. But sub-$10 transactions are only ~1% of volume.
 
@@ -245,7 +243,6 @@ training window a row's own future transactions would be counted.
 
 ## 6. Normalizing device, browser and email strings
 
-<!-- DRAFT: this is your linguistics angle; make the framing yours -->
 The identity table stores user-agent-like strings, and the same thing is spelled many ways: one phone shows up as
 `SM-G930V Build/NRD90M`, `SAMSUNG SM-G930V` and `SM-G930V`; one webmail provider as `hotmail.com`, `hotmail.es`,
 `outlook.com` and `live.com.mx`. Left raw, every spelling is a separate, rarer category, which splits the signal
@@ -280,13 +277,12 @@ share them. [`tests/test_text_norm.py`](tests/test_text_norm.py) holds ~50 table
 <!-- BEGIN:ablation -->
 | variant | features | test PR-AUC | three-tier cost |
 |---|---|---|---|
-| LightGBM | 476 | 0.5182 | $261,046 |
-| Ablation: raw text strings | 463 | 0.5223 | $263,926 |
-| Ablation: no velocity/history/freq | 450 | 0.5222 | $265,878 |
-| Ablation: interpretable features only | 63 | 0.2251 | $356,257 |
+| LightGBM | 476 | 0.5182 | $300,386 |
+| Ablation: raw text strings | 463 | 0.5223 | $304,407 |
+| Ablation: no velocity/history/freq | 450 | 0.5222 | $301,884 |
+| Ablation: interpretable features only | 63 | 0.2251 | $388,265 |
 <!-- END:ablation -->
 
-<!-- DRAFT: rewrite in your own voice -->
 **Honest result: normalization did not improve the score.** The raw-string model scored slightly higher
 (0.522 vs 0.518 test PR-AUC), a gap well inside the bootstrap noise. Gradient boosting can learn useful splits on
 raw categories by itself, and the masked vendor columns already carry most of the device signal. What
@@ -311,6 +307,13 @@ half of the model's performance. Details in [`notebooks/03_text_normalization.ip
 No SMOTE or resampling: it distorts probabilities, and the decision layer multiplies probabilities by dollars.
 All models are calibrated with isotonic regression on the calib split; the champion is the full-feature
 LightGBM variant with the best **validation** PR-AUC.
+
+**The champion isn't always the best on test, and that's expected.** Plain LightGBM and the tuned one are within
+noise of each other on test (PR-AUC 0.518 vs 0.527, both inside the tuned model's interval), and which one gives
+the cheaper policy depends on the cost assumptions: with perfect reviewers plain LightGBM was cheaper (49.4% vs
+48.3% saving); at 90% accuracy the tuned model is, by 0.1 points. The champion was chosen on validation before
+test was looked at. Switching to whichever model wins on test would turn the test window into a second
+validation set and make the reported numbers optimistic.
 
 <!-- BEGIN:metrics -->
 | model | test PR-AUC | ROC-AUC | precision @1% | recall @1% | $ recall @1% | valid PR-AUC | recall @1% FPR | Brier (calibrated) | new-account PR-AUC | test PR-AUC 95% CI |
@@ -343,26 +346,33 @@ bootstrap that resamples whole days, since transactions on the same day are corr
 
 Cost assumptions ([`configs/costs.yaml`](configs/costs.yaml)) are explicit and varied below: chargeback fee $15;
 a wrongly declined customer costs $5 of friction **plus 25% of the order amount** (the margin on the lost sale);
-$3 per manual review; review capacity 1% of daily volume.
+$3 per manual review; reviewers decide 90% of reviewed cases correctly; review capacity 1% of daily volume.
 
-For a transaction with calibrated fraud probability *p* and amount *a*:
+For a transaction with calibrated fraud probability *p* and amount *a*, and reviewer accuracy *q*:
 
 ```
 E[cost | approve] = p * (a + fee)
 E[cost | decline] = (1 - p) * (friction + margin * a)
-E[cost | review]  = review_cost            (reviewer assumed to resolve correctly)
+E[cost | review]  = review_cost + (1 - q) * (E[cost | approve] + E[cost | decline])
 ```
+
+The review line says a reviewer who gets a case wrong approves a fraud or declines a good customer, the same
+mistakes the automatic actions make. With *q* = 1 it reduces to a flat review cost, which is what the first
+version assumed.
 
 Declining beats approving when `p > (friction + margin*a) / (friction + margin*a + a + fee)`: about 0.24 for a $5
 order, falling to 0.20 for large ones.
 
-<!-- DRAFT: this is a good story to tell in your own words -->
 **The lost-margin term was a correction, not part of the first design.** The first version charged a flat $5 for
 every false decline. Declining a $500 order then looked as cheap as declining a $5 one, so the "optimal" policy
 declined **15.5% of legitimate customers**: cheap on paper, unacceptable in practice. A declined order also loses
-the sale, so the decline cost has to grow with the amount. With that fixed, false declines dropped to about 1.4%,
-and it turned out that most of the value comes from the **review tier**: sending the most uncertain high-value
-cases to a person, within capacity.
+the sale, so the decline cost has to grow with the amount. With that fixed, false declines dropped to about 1.5%.
+
+**The second correction was the reviewers.** Once declines were priced properly, the review tier looked like the
+star: with reviewers who are always right, it took the saving from 26.7% (automatic decisions only) to 48.3%. But
+"always right at $3" is an assumption, not a result. The model now charges each reviewed case for the reviewer's
+expected mistakes, the headline is quoted at 90% accuracy, and the review assumptions get their own sensitivity
+grid below.
 
 Policies compared (all thresholds fit on calib, results on test):
 
@@ -376,33 +386,31 @@ Policies compared (all thresholds fit on calib, results on test):
 | **Model: three-tier with review cap** | as above, plus review where it saves the most, with the review bar set so volume fits capacity |
 
 <!-- BEGIN:policy -->
-Costs: chargeback fee $15, friction $5 + 25% of the amount per false decline, review $3, review capacity 1.0% of daily volume.
-
+Costs: chargeback fee $15, friction $5 + 25% of the amount per false decline, review $3, reviewers right 90% of the time, review capacity 1.0% of daily volume. Reviewed cases count their expected reviewer mistakes (approved fraud, declined good customers), so fraud $ and declined-customer counts on rows with reviews are expected values.
 | Policy | Fraud $ stopped | Fraud $ missed | Good customers declined | False-decline rate | Reviews | Total cost | Saving vs approve-all | Saving 95% CI | Saving vs top-1% |
 |---|---|---|---|---|---|---|---|---|---|
 | Approve everything | $0 | $469,609 | 0 | 0.00% | 0 | $515,854 | 0.0% |  | -20.3% |
-| Rules engine (2+ rules decline, 1 rule review) | $3,441 | $466,167 | 0 | 0.00% | 2,320 | $518,517 | -0.5% | -1.6% to 0.3% | -20.9% |
+| Rules engine (2+ rules decline, 1 rule review) | $3,097 | $466,511 | 226 | 0.26% | 2,320 | $525,286 | -1.8% | -4.0% to -0.4% | -22.5% |
 | Model: decline top 1% | $78,901 | $390,707 | 163 | 0.19% | 0 | $428,738 | 16.9% | 13.5% to 20.7% | 0.0% |
 | Model: best flat threshold | $218,043 | $251,565 | 2,099 | 2.46% | 0 | $381,818 | 26.0% | 20.3% to 31.2% | 10.9% |
 | Model: amount-aware decline | $183,162 | $286,447 | 1,369 | 1.60% | 0 | $378,057 | 26.7% | 22.0% to 31.4% | 11.8% |
-| Model: three-tier with review cap | $263,015 | $206,593 | 1,206 | 1.41% | 907 | $266,532 | 48.3% | 44.1% to 52.3% | 37.8% |
+| Model: three-tier with review cap | $248,274 | $221,335 | 1,277 | 1.49% | 926 | $299,562 | 41.9% | 37.7% to 46.0% | 30.1% |
+| Model: three-tier, hard daily cap | $239,609 | $230,000 | 1,294 | 1.51% | 798 | $311,068 | 39.7% | 35.2% to 44.2% | 27.4% |
 
 **Three-tier policy driven by each model**
-
 | Model | Total cost | Saving vs approve-all | Fraud $ recall | False-decline rate | Review rate |
 |---|---|---|---|---|---|
-| LightGBM | $261,046 | 49.4% | 57.3% | 1.53% | 1.08% |
-| Ablation: raw text strings | $263,926 | 48.8% | 56.1% | 1.32% | 1.08% |
-| Ablation: no velocity/history/freq | $265,878 | 48.5% | 59.8% | 2.10% | 1.11% |
-| LightGBM (Optuna-tuned) | $266,532 | 48.3% | 56.0% | 1.41% | 1.02% |
-| LightGBM (scale_pos_weight) | $276,422 | 46.4% | 52.7% | 1.17% | 1.05% |
-| LightGBM (cost-weighted) | $296,102 | 42.6% | 47.3% | 1.27% | 1.05% |
-| Ablation: interpretable features only | $356,257 | 30.9% | 41.4% | 1.95% | 1.15% |
-| Logistic regression | $460,535 | 10.7% | 24.3% | 2.34% | 1.15% |
-| Rules engine | $468,578 | 9.2% | 10.6% | 0.00% | 1.03% |
+| LightGBM (Optuna-tuned) | $299,562 | 41.9% | 52.9% | 1.49% | 1.05% |
+| LightGBM | $300,386 | 41.8% | 52.3% | 1.60% | 1.09% |
+| Ablation: no velocity/history/freq | $301,884 | 41.5% | 55.2% | 2.14% | 1.11% |
+| Ablation: raw text strings | $304,407 | 41.0% | 50.7% | 1.38% | 1.06% |
+| LightGBM (scale_pos_weight) | $312,106 | 39.5% | 47.9% | 1.23% | 1.05% |
+| LightGBM (cost-weighted) | $331,156 | 35.8% | 41.6% | 1.33% | 1.06% |
+| Ablation: interpretable features only | $388,265 | 24.7% | 37.2% | 1.96% | 1.21% |
+| Logistic regression | $497,121 | 3.6% | 20.7% | 2.39% | 1.09% |
+| Rules engine | $518,214 | -0.5% | 9.5% | 0.10% | 1.03% |
 
 **Break-even decline probability by amount**
-
 | amount | decline if p > |
 |---|---|
 | $5 | 0.238 |
@@ -411,29 +419,55 @@ Costs: chargeback fee $15, friction $5 + 25% of the amount per false decline, re
 | $500 | 0.202 |
 | $2,000 | 0.200 |
 
-**Review queue (three-tier, test window):** mean 1.03% of daily volume, max 1.59%; 17 of 31 days above capacity (128 overflow cases).
+**Review queue (three-tier, test window):** mean 1.04% of daily volume, max 1.53%; 16 of 31 days above capacity (128 overflow cases). With the hard daily cap (first come, first served; overflow auto-decided) days over capacity: 0.
 
-Thresholds fit on calib: {"top_1pct_threshold": 0.62083, "cost_optimal_flat_threshold": 0.10352, "review_benefit_threshold": 56.86022, "rules_review_amount_bar": 0.0}
+**Perfect-reviewer bound:** with reviewers always right the three-tier saving would be 48.3% (vs approve-all), against the 90%-accuracy result above.
+
+Thresholds fit on calib: {"top_1pct_threshold": 0.62083, "cost_optimal_flat_threshold": 0.10352, "review_benefit_threshold": 35.56251, "rules_review_amount_bar": 0.0}
 <!-- END:policy -->
 
 ![Cost curve](reports/figures/cost_curve.png)
 
-**Sensitivity.** The costs are assumptions, so the policy is re-fit for 27 combinations of fixed
-friction ($2/$5/$10), lost margin (10/25/50% of the amount) and review capacity (0.5/1/2%):
+**Sensitivity to decline costs.** The costs are assumptions, so the policy is re-fit for 27 combinations of fixed
+friction ($2/$5/$10), lost margin (10/25/50% of the amount) and review capacity (0.5/1/2%), with reviewers at 90%:
 
 ![Sensitivity](reports/figures/sensitivity_three_tier.png)
 
-<!-- DRAFT: rewrite in your own voice -->
-Across all 27 combinations the three-tier policy saves 36-63% against approving everything, so the conclusion
-holds up. The assumption that matters most is not a cost but **review capacity**: going from 0.5% to 2% of daily
-volume adds roughly 15-20 points of savings, more than any change in the friction or margin assumptions. For a
-fraud team, that means the strongest lever is analyst headcount, and it's worth pricing what one more reviewer
-saves.
+Across all 27 combinations the three-tier policy saves 32-56% against approving everything, so the conclusion
+holds up. Two assumptions move it most. The **lost margin** rate: at 10% of the order the policy saves about 50% on
+average, at 50% about 36%, because expensive false declines leave fewer cases worth declining. And **review
+capacity**: going from 0.5% to 2% of daily volume adds about 9 points on average. Fixed friction barely matters.
+
+**Sensitivity to the review assumptions.** The review tier is where the assumptions do the most work, so reviewer
+accuracy (80/90/100%) and cost per review ($3/$8/$15) get their own grid, with decline costs at base values:
+
+<!-- BEGIN:review_sensitivity -->
+Three-tier saving vs approve-all at 1.0% review capacity (no-review policy: 26.7%):
+
+| reviewers | $3 / review | $8 / review | $15 / review |
+|---|---|---|---|
+| 100% accurate | 48.3% | 47.5% | 46.2% |
+| 90% accurate | 41.9% | 41.0% | 39.8% |
+| 80% accurate | 36.1% | 35.1% | 33.8% |
+<!-- END:review_sensitivity -->
+
+![Review sensitivity](reports/figures/sensitivity_review.png)
+
+Accuracy matters far more than price. At 1% capacity, going from $3 to $15 per review costs about 2 points;
+going from 100% to 80% accuracy costs about 12. At 80% accuracy the extra capacity is worth little, because each
+extra review mostly buys more reviewer mistakes. Even in the worst cell the three-tier policy beats the best
+no-review policy (26.7%), but the review tier's share of the saving is only as good as the analysts.
 
 **Operations view.** The review bar is fit on the calibration window and then applied unchanged, the way a
-real-time system would run. That means daily queue volume varies:
+real-time system would run. That means daily queue volume varies, and on about half the test days it runs over:
 
 ![Review queue](reports/figures/review_queue.png)
+
+The fix is a hard daily cap: take reviews first come, first served, and once the day's slots are used, decide the
+overflow automatically (approve or decline by expected cost). That needs no look-ahead, so a real-time system can
+run it. On test it removes every over-capacity day and costs about 2 points of saving (the "hard daily cap" row in
+the policy table). The other options are to staff for the peak instead of the average, or to refit the review bar
+more often so it tracks volume.
 
 A one-page summary for a non-technical fraud lead is in [`reports/memo.md`](reports/memo.md).
 
@@ -470,7 +504,6 @@ Reason codes name only interpretable features; masked vendor columns are folded 
 signals" line, because a decline can't be explained to a customer or an auditor with "V258 was high". The API
 returns the top three with every score.
 
-<!-- DRAFT: rewrite in your own voice (source: notebooks/02_error_analysis.ipynb) -->
 **Where the model goes wrong** ([`notebooks/02_error_analysis.ipynb`](notebooks/02_error_analysis.ipynb)):
 
 - **False alarms concentrate in product C and identity-present traffic, not on new accounts** (which I expected).
@@ -548,10 +581,10 @@ laptop, read-only history snapshot). A production system would keep running aggr
 `make docker` packages it; CI builds the image and smoke-tests it.
 
 **Policy simulator** ([`app/dashboard.py`](app/dashboard.py), `make dashboard`): sliders for fee, friction,
-review cost and capacity; thresholds are re-fit live and every policy re-scored on the test window. Tabs for
+lost margin, review cost, reviewer accuracy and capacity; thresholds are re-fit live and every policy re-scored on the test window. Tabs for
 model quality, drift, and per-transaction explanations.
 
-<!-- TODO: add a screenshot or GIF of the dashboard: reports/figures/dashboard.png -->
+![Policy simulator](reports/figures/dashboard.png)
 
 ## 12. Limitations
 
@@ -562,14 +595,16 @@ model quality, drift, and per-transaction explanations.
 - **Costs are assumptions**, not observed business numbers. Dollar results are illustrative; the sensitivity grid
   shows how much they move.
 - **Labels lag and miss fraud.** Chargeback labels arrive late and never cover undetected fraud, so "legitimate"
-  contains some unlabeled fraud, and the review queue is assumed to resolve cases perfectly.
-- **Reviewers are assumed perfect.** Most of the three-tier saving comes from manual review, which is modeled as
-  a $3 decision that is always right. Real reviewers make mistakes and add delay, so treat that part as an upper bound.
+  contains some unlabeled fraud.
+- **Reviewer quality is assumed, not measured.** About 15 of the 42 points of saving come from manual review,
+  modeled as a $3 decision that is right 90% of the time, with mistakes independent of the case. Real reviewers
+  are probably worse on exactly the hard cases the policy sends them, and they add delay. The review grid shows the
+  range (34-48% at 1% capacity); the 26.7% no-review policy is the floor that doesn't depend on reviewers at all.
 - **The rules baseline is weak by construction.** Five quick rules, fit on one window, decayed to near-random on
   test (the velocity rule's precision fell from 14% to 2.5%). A real ops team's rules would be stronger and
   maintained, so the "vs rules engine" comparison flatters the model.
 - **Thresholds are fit once.** The review bar is set on the calibration window; real traffic would need it
-  monitored and refreshed (the queue chart shows days over capacity).
+  monitored and refreshed. Without the hard daily cap the queue runs over capacity on about half the test days.
 - **One merchant ecosystem.** It may not transfer to other fraud types (account takeover, synthetic identity,
   first-party/BNPL fraud).
 - **Demo serving.** The API recomputes features from a static history snapshot; it does not update state.
@@ -577,16 +612,16 @@ model quality, drift, and per-transaction explanations.
 ## 13. How this was built (AI-assisted development)
 
 I used Claude Code to help design and write much of this codebase. I treated
-its output as untrusted until checked, and the checks are part of the repo:_
+its output as untrusted until checked, and the checks are part of the repo:
 
-- *Backward-looking features are proven backward-looking by tests, including a "change the future, the past must
-  not move" test, and by an independent pandas reimplementation that must match the SQL exactly.*
-- *No `TransactionID` appears in two splits; split boundaries are strictly time-ordered.*
-- *PR-AUC is recomputed by hand from the precision-recall curve and must match scikit-learn.*
-- *The cost rule is checked on three hand-calculated transactions (the "spreadsheet check"), and the cost curve's
-  minimum must equal the cost of the selected threshold.*
-- *The API's online features must equal the batch features exactly.*
-- *The whole pipeline runs end-to-end in CI on synthetic data.*
+- Backward-looking features are proven backward-looking by tests, including a "change the future, the past must
+  not move" test, and by an independent pandas reimplementation that must match the SQL exactly.
+- No `TransactionID` appears in two splits; split boundaries are strictly time-ordered.
+- PR-AUC is recomputed by hand from the precision-recall curve and must match scikit-learn.
+- The cost rule is checked on hand-calculated transactions (the "spreadsheet check"), including reviewer
+  mistakes, and the cost curve's minimum must equal the cost of the selected threshold.
+- The API's online features must equal the batch features exactly.
+- The whole pipeline runs end-to-end in CI on synthetic data.
 
 ## 14. Reproduce
 

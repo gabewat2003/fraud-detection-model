@@ -35,7 +35,19 @@ scores often don't have. **Side effect:** isotonic output is a step function wit
 ### 7. Review capacity as a threshold fit on calib, not a per-day top-k
 **Why:** a real-time system decides per transaction and cannot see the rest of the day. The bar is set so review
 volume matches capacity on the calibration window, then applied unchanged; the queue chart shows the days it
-overflows, which is the honest operational picture.
+overflows. **Fix for the overflow:** a hard daily cap, first come first served, with overflow decided
+automatically by expected cost (`policy.enforce_daily_cap`). It needs no look-ahead and costs about 2 points of
+saving on test.
+
+### 11. Reviewers are charged for their mistakes
+**Why:** a flat "$3, always right" review cost made the review tier look like most of the value. Each reviewed
+case now carries `(1 - accuracy) x` the cost of the wrong automatic action, with accuracy 90% in the base case and
+80/90/100% x $3/$8/$15 in a sensitivity grid. With accuracy 100% the formula reduces to the old flat cost.
+**Limitation:** mistakes are assumed independent of the case; real reviewers are likely worse on hard cases.
+
+### 12. Champion chosen on validation, not test
+**Why:** plain and tuned LightGBM are within noise on test, and which one gives the cheaper policy flips with
+the cost assumptions. Picking the test winner would make the test window a second validation set.
 
 ### 8. Text normalization as rules, not learned embeddings
 **Why:** a few thousand distinct strings, mostly structured (brand prefixes, version numbers, TLDs). Ordered regex

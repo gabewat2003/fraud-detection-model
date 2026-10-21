@@ -7,7 +7,7 @@ from functools import cache
 from pathlib import Path
 
 import yaml
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG_DIR = ROOT / "configs"
@@ -79,6 +79,9 @@ class Sensitivity(BaseModel):
     friction_cost: list[float]
     lost_margin_rate: list[float]
     review_cap: list[float]
+    # second grid: how much of the saving depends on the manual-review assumptions
+    reviewer_accuracy: list[float] = [1.0]
+    review_cost: list[float] = [3.0]
 
 
 class Costs(BaseModel):
@@ -87,6 +90,7 @@ class Costs(BaseModel):
     lost_margin_rate: float = 0.0
     review_cost: float
     review_cap: float
+    reviewer_accuracy: float = Field(1.0, ge=0.0, le=1.0)
     sensitivity: Sensitivity | None = None
 
 
